@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Folded notebook page">
+  <path fill="#f4eedc" stroke="#20241f" stroke-width="4" d="M10 5h31l13 13v41H10z"/>
+  <path fill="#a8b7ad" stroke="#20241f" stroke-width="4" d="M41 5v14h13"/>
+  <path stroke="#a63c2d" stroke-width="4" d="M18 15v34"/>
+  <path stroke="#164c63" stroke-width="3" d="M24 27h21M24 37h21M24 47h15"/>
+</svg>
