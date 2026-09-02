@@ -110,6 +110,23 @@ test("landing and demo have no serious accessibility findings", async ({ page })
   }
 });
 
+test("keyboard navigation traps dialog focus and returns it to the opener", async ({ page }) => {
+  await page.goto("/demo");
+  const opener = page.getByRole("button", { name: "Add source" });
+  await opener.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Add an approved source" })).toBeVisible();
+  await expect(page.getByLabel("Type")).toBeFocused();
+
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Add source", exact: true }).last()).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Type")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(opener).toBeFocused();
+});
+
 test("real workspace creates a source and its first release", async ({ page }) => {
   await page.goto("/workspace");
   await expect(page.getByText("No approved sources yet")).toBeVisible();

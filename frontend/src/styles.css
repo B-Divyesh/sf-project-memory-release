@@ -120,7 +120,7 @@ textarea { resize: vertical; min-height: 112px; }
 .release-card + .release-card { margin-top: 18px; }
 .release-card header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .release-card h3 { color: white; }
-.release-card .status.current { color: #b9e3c5; }
+.release-card .status.current { color: #d9f0dd; }
 .release-card .status.stale { color: #ffb0a4; }
 .release-card a, .release-card button { color: white; }
 .release-actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }

@@ -1,5 +1,14 @@
 # Project Memory Release handoff
 
+## Repair on 2 September 2026
+
+- Reproduced the failed release on revision `sf-project-memory-release--xeqtbcc`. It was unhealthy with 11 restarts; container logs showed a panic at startup while running migrations: SQLite error code 5, `database is locked`. The listener was never reached, which caused both hostnames to return `000`.
+- Kept the existing `/data` mount and database path unchanged. No durable files, shares, or rows were deleted or replaced.
+- Changed SQLite startup to one pooled connection, a five-second busy timeout, and 30 bounded retries with structured warnings. This fits the deployment's enforced one-replica SQLite model and lets a rolling revision wait for the previous mount lock to clear.
+- Added a regression test that holds the database under an exclusive lock, proves startup remains alive, releases the lock, and verifies the migration succeeds.
+- Added an explicit keyboard dialog-focus test. It covers Enter activation, focus wrapping, Escape dismissal, and focus return.
+- Raised the current-status ink used on dark release sheets after Axe measured the old composite at 4.44:1.
+
 ## What shipped
 
 - Rust 2021 Axum service on `PORT` with SQLx/SQLite migrations, structured logs, graceful shutdown, CSP/security headers, build SHA health response, and forwarded-IP rate limiting.
@@ -24,21 +33,28 @@ cargo test
 
 `npm run build` writes `dist/index.html`. The production image is built from the root `Dockerfile`; it is multi-stage, runs as UID 10001, and needs only `PORT`.
 
-## Verification completed on 2 September 2026
+## Local verification completed on 2 September 2026
 
-- `npm test`: 11/11 Playwright tests passed.
-- `cargo test`: 2/2 Rust tests passed.
+- Exact clean build: `npm ci && npm run build && cargo build --release --locked` passed and produced `dist/` plus the release server binary.
+- `npm test`: 12/12 Playwright tests passed.
+- `cargo test --locked`: 3/3 Rust tests passed, including locked-database startup recovery.
+- `cargo fmt -- --check` and `cargo clippy --locked --all-targets -- -D warnings`: passed.
 - Every `.factory/claims.json` command is covered by one tagged browser test.
 - Axe: no serious or critical findings on `/` and `/demo`.
-- Factory URL verifier: HTTP 200, no console errors, one `h1`, `lang=en`, main landmark, all image alt text present, and all buttons named.
-- Responsive smoke: `/`, `/demo`, `/privacy`, `/terms`, and the 404 state passed at 390×844.
-- Lighthouse mobile: performance 98, accessibility 100, best practices 100, SEO 100.
-- Lighthouse metrics: LCP 2.1 s, CLS 0.044, total blocking time 0 ms.
-- Initial assets: JS 9.00 KB gzip, CSS 3.88 KB gzip, loaded Latin fonts 110 KB, mobile hero 42 KB.
+- Responsive smoke: `/`, `/demo`, `/privacy`, `/terms`, and the 404 state passed at 390×844. Keyboard-only dialog navigation passed.
+- Offline reload, isolated demo privacy, license fixture, rate limiting, real workspace writes, and every claim command passed.
+- Production-style non-root smoke with only `PORT` set: `/health` returned 200 with `{"status":"ok","build_sha":"dev"}` and `/` returned 200.
+- Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100.
+- Lighthouse metrics: LCP 1.7 s, CLS 0, total blocking time 0 ms.
+- Initial assets: JS 9.00 KB gzip and CSS 3.87 KB gzip.
 - Load smoke: 100 concurrent `/health` requests completed successfully in 237 ms (422 requests/second observed locally).
 - API rate-limit test: excess requests return 429 with `Retry-After: 1`.
 - `npm audit --omit=dev`: zero vulnerabilities.
 - Known application routes return 200 and unknown routes return the styled SPA 404 with HTTP 404.
+
+## Live repair evidence
+
+Pending the repair image build and deployment. Record the image, revision, health body, both hostname status codes, and verifier results here after release.
 
 ## Runtime and data
 

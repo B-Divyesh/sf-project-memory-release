@@ -52,7 +52,7 @@ docker build --build-arg BUILD_SHA=$(git rev-parse HEAD) -t project-memory-relea
 docker run --rm -p 8080:8080 project-memory-release
 ```
 
-The container needs only `PORT` and defaults to `8080`. It writes SQLite data to `/data` when that mount exists, then falls back to `/app/data`. `/health` returns the build SHA. Do not place secrets in the image.
+The container needs only `PORT` and defaults to `8080`. It writes SQLite data to `/data` when that mount exists, then falls back to `/app/data`. Startup waits for transient SQLite mount locks without replacing the database. `/health` returns the build SHA. Do not place secrets in the image.
 
 ## Privacy and billing
 
