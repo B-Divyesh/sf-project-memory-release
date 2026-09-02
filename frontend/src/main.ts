@@ -132,7 +132,7 @@ function landing(): string {
         <h1 tabindex="-1">Release trusted context for coding agents</h1>
         <p class="lead">For product engineers whose agents need current decisions, architecture, and product language.</p>
         <div class="actions"><a class="button" href="/demo" data-nav>Try it with sample data</a><span class="after-action">A reviewable context pack opens next.</span></div>
-        <ul class="facts"><li>Repositories are never indexed automatically.</li><li>Each release keeps its source revision.</li><li>One release is free. Teams cost $99 monthly.</li></ul>
+        <ul class="facts"><li>Repositories are never indexed automatically.</li><li>Each release keeps its source revision.</li><li>One release is free. Existing team licenses still work.</li></ul>
       </div>
       <figure class="hero-art">
         <picture><source media="(max-width: 700px)" srcset="/assets/notebook-hero-960.webp"><img src="/assets/notebook-hero-1536.webp" width="1536" height="1024" fetchpriority="high" alt="An engineering notebook with source cards, revision marks, and dependency diagrams"></picture>
@@ -154,13 +154,13 @@ function landing(): string {
       <div><h2>How project data is handled</h2><p>You add each approved record. The service stores those records and releases in its own SQLite database. Demo changes stay in an isolated browser session.</p><a href="/privacy" data-nav>Read the privacy policy</a></div>
     </div></section>
     <section class="section" aria-labelledby="pricing-title"><div class="wrap">
-      <div class="price-sheet"><p class="hand-note">Team plan</p><h2 id="pricing-title">Release context every week</h2><p class="price">$99 <span>per team, each month</span></p><p>Includes recurring releases, shared workspace access, release history, and provenance checks. The free plan includes one release.</p><div class="actions"><a class="button" href="https://api.sociobot.in/api/v1/products/project-memory-release/checkout">Buy the team plan</a><button class="secondary" data-action="open-license">Restore a license</button></div><p class="field-help">Sociobot is the merchant of record. Cancel before renewal to stop future charges.</p></div>
+      <div class="price-sheet"><p class="hand-note">Team licenses</p><h2 id="pricing-title">Restore an existing team license</h2><p>Team checkout is not available yet. Existing licenses still enable recurring releases and shared workspace access.</p><div class="actions"><button class="primary" data-action="open-license">Restore a license</button></div><p class="field-help">Paste the license from your Sociobot receipt. No purchase action is shown until checkout registration is available.</p></div>
     </div></section>`);
 }
 
 function legalPage(kind: "privacy" | "terms"): string {
   const privacy = `<h1 tabindex="-1">Privacy</h1><p>Last updated: 2 September 2026</p><h2>What we store</h2><p>The service stores the source records and releases you add. It also stores source paths and Git revision labels.</p><p>A team license is stored in your browser. Sociobot receives that license when the browser verifies it.</p><h2>What we do not collect</h2><p>We do not index repositories automatically. We do not use analytics or advertising trackers. The demo uses session storage and does not send its records to the project database.</p><h2>Storage and deletion</h2><p>Project records live in the service SQLite database. Delete individual sources from the workspace. Contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> for full workspace deletion.</p><h2>Service providers</h2><p>Sociobot handles billing and license checks. The hosting provider processes network and storage data needed to run the service.</p>`;
-  const terms = `<h1 tabindex="-1">Terms</h1><p>Last updated: 2 September 2026</p><h2>Using the service</h2><p>You must have permission to add each source record. You remain responsible for reviewing packs before using them with an agent.</p><h2>Free and team plans</h2><p>The free plan includes one release. The team plan costs $99 per team each month. It includes recurring releases, shared workspace access, release history, and provenance checks.</p><h2>Billing and refunds</h2><p>Sociobot is the merchant of record. The subscription renews monthly until cancelled. Billing support and approved refunds are handled by Sociobot. A refund or cancellation may end the license.</p><h2>Availability</h2><p>The service is provided as available. Keep copies of released packs in your repository. We may suspend misuse that harms the service or other users.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with billing or service questions.</p>`;
+  const terms = `<h1 tabindex="-1">Terms</h1><p>Last updated: 2 September 2026</p><h2>Using the service</h2><p>You must have permission to add each source record. You remain responsible for reviewing packs before using them with an agent.</p><h2>Free and existing team licenses</h2><p>The free plan includes one release. Checkout for new team licenses is not available yet. Existing valid licenses enable recurring releases and shared workspace access.</p><h2>Billing and refunds</h2><p>Sociobot is the merchant of record for existing licenses. Billing support and approved refunds are handled by Sociobot. A refund or cancellation may end a license.</p><h2>Availability</h2><p>The service is provided as available. Keep copies of released packs in your repository. We may suspend misuse that harms the service or other users.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with billing or service questions.</p>`;
   return layout(`<div class="wrap legal"><article>${kind === "privacy" ? privacy : terms}</article></div>`);
 }
 
@@ -232,7 +232,7 @@ function showSourceDialog(entry?: Entry): void {
     <label>Title<input name="title" required maxlength="120" value="${escapeHtml(entry?.title || "")}"></label>
     <label>Decision or definition<textarea name="body" required maxlength="4000">${escapeHtml(entry?.body || "")}</textarea></label>
     <label>Source path<input name="sourcePath" required maxlength="260" value="${escapeHtml(entry?.sourcePath || "")}" placeholder="docs/adr/0042.md"></label>
-    <label>Git revision<input name="sourceRevision" required maxlength="64" pattern="[A-Za-z0-9._/-]+" value="${escapeHtml(entry?.sourceRevision || "")}" placeholder="9f42c1a"><span class="field-help">Use the commit or tag that approved this text.</span></label>
+    <label>Git revision<input name="sourceRevision" required maxlength="64" pattern="[A-Za-z0-9._\\x2F\\x2D]+" value="${escapeHtml(entry?.sourceRevision || "")}" placeholder="9f42c1a"><span class="field-help">Use the commit or tag that approved this text.</span></label>
     ${entry ? "" : `<label>Import one Markdown file<input type="file" id="source-file" accept=".md,text/markdown,text/plain"><span class="field-help">The file stays in this form until you save.</span></label>`}
     <div id="dialog-error" aria-live="assertive"></div><div class="dialog-actions"><button type="button" class="secondary" data-action="close-dialog">Cancel</button><button type="submit" class="primary">${entry ? "Save source" : "Add source"}</button></div>
   </form></section>`;
@@ -285,7 +285,7 @@ function showLicenseDialog(): void {
   backdrop.querySelector("form")!.addEventListener("submit", async e => {
     e.preventDefault(); const token = new FormData(e.currentTarget as HTMLFormElement).get("license")?.toString().trim() || "";
     const message = backdrop.querySelector<HTMLElement>("#license-message")!; message.innerHTML = "<p>Checking the license…</p>";
-    try { const valid = await verifyLicense(token, true); message.innerHTML = valid ? '<div class="notice">Team features are active.</div>' : '<div class="error">This license is not active. Check the token or buy the team plan.</div>'; } catch { message.innerHTML = '<div class="error">The license service could not be reached. Try again when you are online.</div>'; }
+    try { const valid = await verifyLicense(token, true); message.innerHTML = valid ? '<div class="notice">Team features are active.</div>' : '<div class="error">This license is not active. Check the token or contact support.</div>'; } catch { message.innerHTML = '<div class="error">The license service could not be reached. Try again when you are online.</div>'; }
   });
 }
 
@@ -371,7 +371,7 @@ function compileDemo(version: string, notes: string, entries: Entry[]): Release 
 async function createRelease(event: SubmitEvent): Promise<void> {
   event.preventDefault(); const form = event.currentTarget as HTMLFormElement; const values = new FormData(form); const version = values.get("version")!.toString().trim(); const notes = values.get("notes")!.toString().trim();
   if (!selected.size) { liveMessage = "Select at least one approved source before releasing."; await render(); return; }
-  if (!isDemo() && currentState?.releases.length && !hasActiveLicense()) { liveMessage = "The free plan includes one release. Restore or buy a team license to release another version."; await render(); showLicenseDialog(); return; }
+  if (!isDemo() && currentState?.releases.length && !hasActiveLicense()) { liveMessage = "The free plan includes one release. Restore a team license to release another version."; await render(); showLicenseDialog(); return; }
   try {
     if (isDemo()) {
       const state = getDemoState(); if (state.releases.some(item => item.version === version)) throw new Error("That version already exists. Enter a new version.");

@@ -1,4 +1,4 @@
-const CACHE = "project-memory-release-v1";
+const CACHE = "project-memory-release-v2";
 const SHELL = ["/", "/demo", "/assets/notebook-hero-960.webp", "/favicon.svg"];
 self.addEventListener("install", event => event.waitUntil((async () => {
   const cache = await caches.open(CACHE);

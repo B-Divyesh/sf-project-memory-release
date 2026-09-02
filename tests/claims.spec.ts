@@ -75,15 +75,6 @@ test("@claim:license-restore verifies a pasted team license", async ({ page }) =
   await expect(page.getByText("Team features are active.")).toBeVisible();
 });
 
-test("@claim:paid-plan shows the monthly price and Sociobot checkout", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByText("$99 per team, each month", { exact: true })).toBeVisible();
-  const checkout = page.getByRole("link", { name: "Buy the team plan" });
-  await expect(checkout).toHaveAttribute("href", "https://api.sociobot.in/api/v1/products/project-memory-release/checkout");
-  await page.goto("/terms");
-  await expect(page.getByText("The subscription renews monthly until cancelled.")).toBeVisible();
-});
-
 test("backend rate limit returns 429 with Retry-After", async ({ request }) => {
   const responses = await Promise.all(Array.from({ length: 50 }, () => request.get("/api/state", { headers: { "X-Forwarded-For": "203.0.113.80" } })));
   const limited = responses.find(response => response.status() === 429);
@@ -125,6 +116,50 @@ test("keyboard navigation traps dialog focus and returns it to the opener", asyn
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(opener).toBeFocused();
+});
+
+test("Git revision provenance rejects malformed input in demo and real workspaces without a browser error", async ({ page }) => {
+  const browserErrors: string[] = [];
+  page.on("console", message => { if (message.type() === "error") browserErrors.push(message.text()); });
+  page.on("pageerror", error => browserErrors.push(error.message));
+
+  for (const path of ["/demo", "/workspace"]) {
+    await page.goto(path);
+    await page.locator(".ledger").getByRole("button", { name: /Add (the first )?source/ }).first().click();
+    await page.getByLabel("Title").fill("Keep audit events for 30 days");
+    await page.getByLabel("Decision or definition").fill("Audit events remain available for 30 days.");
+    await page.getByLabel("Source path").fill("docs/product/audit.md");
+    const revision = page.getByLabel("Git revision");
+    await expect(revision).toHaveAttribute("pattern", "[A-Za-z0-9._\\x2F\\x2D]+");
+    await revision.fill("bad revision!");
+    expect(await revision.evaluate(input => input.checkValidity())).toBe(false);
+    await page.getByRole("button", { name: "Add source", exact: true }).last().click();
+    await expect(page.getByRole("dialog", { name: "Add an approved source" })).toBeVisible();
+    await expect(page.locator(".source-item").filter({ hasText: "Keep audit events for 30 days" })).toHaveCount(0);
+  }
+
+  expect(browserErrors).toEqual([]);
+});
+
+test("static responses have immutable asset and revalidation policies", async ({ page, request }) => {
+  const landing = await page.goto("/");
+  expect(landing?.headers()["cache-control"]).toBe("no-cache, max-age=0, must-revalidate");
+  const stylesheet = await page.locator('link[rel="stylesheet"]').getAttribute("href");
+  expect(stylesheet).toMatch(/^\/assets\/index-.+\.css$/);
+  const asset = await request.get(stylesheet!);
+  expect(asset.headers()["cache-control"]).toBe("public, max-age=31536000, immutable");
+  const worker = await request.get("/sw.js");
+  expect(worker.headers()["cache-control"]).toBe("no-cache, max-age=0, must-revalidate");
+  const state = await request.get("/api/state", { headers: { "X-Workspace-Key": "cache-policy-test-key-123" } });
+  expect(state.headers()["cache-control"]).toBe("no-store");
+});
+
+test("checkout is truthfully unavailable while existing license recovery remains available", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Team checkout is not available yet.")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Buy/i })).toHaveCount(0);
+  await page.getByRole("button", { name: "Restore a license" }).click();
+  await expect(page.getByRole("dialog", { name: "Restore a team license" })).toBeVisible();
 });
 
 test("real workspace creates a source and its first release", async ({ page }) => {

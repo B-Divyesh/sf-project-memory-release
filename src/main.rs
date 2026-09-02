@@ -282,6 +282,7 @@ async fn shutdown() {
 }
 
 async fn security_headers(request: Request, next: Next) -> Response {
+    let path = request.uri().path().to_owned();
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(
@@ -297,6 +298,32 @@ async fn security_headers(request: Request, next: Next) -> Response {
         HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
     );
     headers.insert("content-security-policy", HeaderValue::from_static("default-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self' https://api.sociobot.in; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'"));
+    let cache_control = if path.starts_with("/api/") || path == "/health" {
+        // Workspace state and health are dynamic; neither may be served from an
+        // HTTP cache after a mutation or deployment.
+        "no-store"
+    } else if path.starts_with("/assets/") {
+        // Vite gives every compiled asset a content hash. Public product art is
+        // deployed with the same immutable release image, so it is versioned by
+        // the container revision as well.
+        "public, max-age=31536000, immutable"
+    } else if path == "/sw.js"
+        || path.ends_with(".html")
+        || matches!(
+            path.as_str(),
+            "/" | "/demo" | "/workspace" | "/privacy" | "/terms"
+        )
+    {
+        // Always revalidate the HTML shell and worker so a new release can
+        // update its asset manifest and service-worker cache.
+        "no-cache, max-age=0, must-revalidate"
+    } else {
+        "public, max-age=86400"
+    };
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static(cache_control),
+    );
     response
 }
 
@@ -653,7 +680,7 @@ mod tests {
             title: "A".into(),
             body: "B".into(),
             source_path: "a.md".into(),
-            source_revision: "bad revision".into(),
+            source_revision: "bad revision!".into(),
         };
         assert!(validate_entry(&input).is_err());
     }
