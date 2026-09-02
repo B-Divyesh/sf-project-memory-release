@@ -13,7 +13,7 @@ One-click demo: <https://project-memory-release.sociobot.in/demo>
 - Reviewable context packs with stable `project-memory://` references.
 - Version history, Markdown copy and download, and stale citation checks.
 - An isolated sample workspace that works offline after its first visit.
-- A free first release and recovery for existing team licenses.
+- One free release. A verified team license allows more releases and workspace-key sharing.
 - Browser-held workspace keys and SQLite persistence under `/data` in production.
 
 ## Run locally
@@ -58,7 +58,7 @@ The container needs only `PORT` and defaults to `8080`. It writes SQLite data to
 
 Real workspace data is separated by a random key stored in the browser. Demo records use `sessionStorage` under `demo:project-memory-release:state` and do not enter the real workspace. The product loads no third-party fonts, scripts, or trackers.
 
-New team checkout is temporarily unavailable, so the product does not show a purchase action. Existing licenses can be restored and verified through the Sociobot verification API. No payment provider is embedded here. See `/privacy` and `/terms` in the running product.
+New team checkout is temporarily unavailable, so the product does not show a purchase action. Existing licenses can be restored through the Sociobot verification API. A verified license allows more releases and lets its holder share a workspace key. No payment provider is embedded here. See `/privacy` and `/terms` in the running product.
 
 ## License
 

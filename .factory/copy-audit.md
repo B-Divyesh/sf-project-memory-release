@@ -12,7 +12,6 @@ Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. H
 | 5 | Repositories are never indexed automatically. |
 | 6 | Each release keeps its source revision. |
 | 4 | One release is free. |
-| 7 | Existing team licenses still work. |
 | 3 | The product itself |
 | 5 | See what an agent receives |
 | 9 | Approved source records compile into a small Markdown file. |
@@ -40,14 +39,15 @@ Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. H
 | 2 | Team licenses |
 | 6 | Restore an existing team license |
 | 6 | Team checkout is not available yet. |
-| 10 | Existing licenses still enable recurring releases and shared workspace access. |
+| 7 | A verified team license allows more releases. |
+| 12 | It also lets the license holder share a workspace key with teammates. |
 | 3 | Restore a license |
 | 8 | Paste the license from your Sociobot receipt. |
 | 10 | No purchase action is shown until checkout registration is available. |
 | 8 | Release approved project knowledge as versioned context packs. |
 | 6 | Generated illustration made for this product. |
 
-Result: average 5.6 words. Longest sentence: 12 words. No sentence exceeds 22 words. No banned words appear. The first screen says the job, user, first action, next result, privacy, provenance, and price in one breath.
+Result: longest sentence: 12 words. No sentence exceeds 22 words. No banned words appear. The first screen says the job, user, first action, next result, privacy, provenance, and price in one breath.
 
 ## Terminology
 
