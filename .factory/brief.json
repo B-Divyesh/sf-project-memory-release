@@ -1,0 +1,11 @@
+{
+  "slug": "project-memory-release",
+  "title": "Project Memory Release",
+  "summary": "Release approved project decisions as versioned context packs for coding agents.",
+  "territory": "devtools-data",
+  "artifact_class": "web-with-backend",
+  "user": "Product engineers whose agent must use project decisions, architecture, and product language correctly as a codebase changes.",
+  "smallest_useful_product": "A Git-native service that compiles selected ADRs, glossary terms, and product decisions into versioned context packs, highlights stale citations, and emits vendor-neutral references.",
+  "monetization": "subscription — $99/team/month for recurring context releases, access control, and provenance.",
+  "constraints": "Do not index repositories by default; use scoped Git access; preserve document permissions; make generated packs reviewable before release."
+}
