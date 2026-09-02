@@ -4,7 +4,7 @@
 
 - Reproduced the failed release on revision `sf-project-memory-release--xeqtbcc`. It was unhealthy with 11 restarts; container logs showed a panic at startup while running migrations: SQLite error code 5, `database is locked`. The listener was never reached, which caused both hostnames to return `000`.
 - Kept the existing `/data` mount and database path unchanged. No durable files, shares, or rows were deleted or replaced.
-- Changed SQLite startup to one pooled connection, a five-second busy timeout, and 30 bounded retries with structured warnings. This fits the deployment's enforced one-replica SQLite model and lets a rolling revision wait for the previous mount lock to clear.
+- Changed SQLite startup to one pooled connection, a five-second busy timeout, and 30 bounded retries with structured warnings. On Linux it uses SQLite's `unix-dotfile` VFS because the Azure Files SMB mount did not release the default POSIX byte-range lock even after every old replica was drained. The database path and rollback journal remain unchanged.
 - Added a regression test that holds the database under an exclusive lock, proves startup remains alive, releases the lock, and verifies the migration succeeds.
 - Added an explicit keyboard dialog-focus test. It covers Enter activation, focus wrapping, Escape dismissal, and focus return.
 - Raised the current-status ink used on dark release sheets after Axe measured the old composite at 4.44:1.

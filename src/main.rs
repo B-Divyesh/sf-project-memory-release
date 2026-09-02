@@ -184,11 +184,7 @@ async fn open_database_with_retry(
 ) -> Result<SqlitePool, DatabaseStartupError> {
     let attempts = attempts.max(1);
     for attempt in 1..=attempts {
-        let options = SqliteConnectOptions::new()
-            .filename(database_path)
-            .create_if_missing(true)
-            .foreign_keys(true)
-            .busy_timeout(busy_timeout);
+        let options = sqlite_connect_options(database_path, busy_timeout);
         let pool = match SqlitePoolOptions::new()
             // The deployed service is deliberately single-replica and its database is
             // on an Azure Files mount. One connection avoids self-contention on that
@@ -227,6 +223,20 @@ async fn open_database_with_retry(
     }
 
     unreachable!("the startup loop always returns on its final attempt")
+}
+
+fn sqlite_connect_options(database_path: &Path, busy_timeout: Duration) -> SqliteConnectOptions {
+    let options = SqliteConnectOptions::new()
+        .filename(database_path)
+        .create_if_missing(true)
+        .foreign_keys(true)
+        .busy_timeout(busy_timeout);
+    #[cfg(unix)]
+    // Azure Files is mounted over SMB, where SQLite's default POSIX byte-range
+    // locks can remain busy even with one pod. The dotfile VFS uses atomic
+    // filesystem lock artifacts while retaining normal rollback journaling.
+    let options = options.vfs("unix-dotfile");
+    options
 }
 
 fn sqlite_error_is_busy(error: &sqlx::Error) -> bool {
@@ -654,10 +664,7 @@ mod tests {
             std::env::temp_dir().join(format!("project-memory-lock-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&directory).unwrap();
         let database_path = directory.join("project-memory-release.sqlite3");
-        let blocker_options = SqliteConnectOptions::new()
-            .filename(&database_path)
-            .create_if_missing(true)
-            .busy_timeout(Duration::ZERO);
+        let blocker_options = sqlite_connect_options(&database_path, Duration::ZERO);
         let blocker = SqlitePoolOptions::new()
             .max_connections(1)
             .connect_with(blocker_options)
