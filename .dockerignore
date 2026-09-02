@@ -1,0 +1,10 @@
+.git
+.factory
+node_modules
+target
+dist
+test-results
+playwright-report
+graphify-out
+assets/src
+*.sqlite3

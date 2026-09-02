@@ -4,3 +4,10 @@ dist/
 *.log
 graphify-out/
 .DS_Store
+target/
+test-results/
+playwright-report/
+.lighthouse/
+.factory/evidence/
+data/
+*.sqlite3
