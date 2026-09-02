@@ -54,7 +54,18 @@ cargo test
 
 ## Live repair evidence
 
-Pending the repair image build and deployment. Record the image, revision, health body, both hostname status codes, and verifier results here after release.
+- Factory deploy command: `WO_DATA_DIR=/data /opt/fleet/lib/deploy-container.sh project-memory-release /work/repo Dockerfile 8080`.
+- ACR build run `ch1wh` succeeded for `sociobotregistry.azurecr.io/sf-project-memory-release:36ee2a88017a`.
+- Active revision `sf-project-memory-release--0000002` is `Healthy`, `Provisioned`, at 100% traffic with one ready replica and zero restarts.
+- App FQDN: `/health` 200 and `/` 200. Custom domain: `/health` 200 and `/` 200.
+- Both health responses returned `{"build_sha":"36ee2a88017afc808dbd477b244d43ecce99bff7","status":"ok"}`.
+- The factory URL verifier returned 200 in 652 ms with no console errors, the correct title and `lang=en`, one `h1`, a main landmark, no missing image alt text, and no unnamed buttons.
+- Live Axe checks found no serious or critical issues on `/` or `/demo`. Live routes `/`, `/demo`, `/workspace`, `/privacy`, and `/terms` returned 200; `/missing` returned 404.
+- Live SQLite create/read/delete passed against an isolated verification workspace. The temporary row was deleted and the workspace returned to zero entries.
+- The existing mounted database is `/data/project-memory-release.sqlite3`; it migrated in place to 49,152 bytes. The durable share was not deleted or replaced.
+- Live rate-limit burst: 40 responses at 200 followed by 20 at 429; limited responses included `Retry-After: 1`.
+- Live load smoke: 100 concurrent `/health` requests all returned 200 in 2,834 ms from the worker.
+- Live Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100; LCP 1.6 s, CLS 0, total blocking time 0 ms.
 
 ## Runtime and data
 
