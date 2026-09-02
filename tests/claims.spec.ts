@@ -94,7 +94,8 @@ test("backend rate limit returns 429 with Retry-After", async ({ request }) => {
 test("pages have one heading and support a 390px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/", "/demo", "/privacy", "/terms", "/missing"]) {
-    await page.goto(path);
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(path === "/missing" ? 404 : 200);
     await expect(page.locator("main")).toBeVisible();
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator("h1")).toBeVisible();
