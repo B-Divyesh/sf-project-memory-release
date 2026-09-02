@@ -1,5 +1,15 @@
 # Project Memory Release handoff
 
+## Independent verification — **FAIL** (2026-09-02)
+
+Candidate `c0d6da0fa6dfd468328c36220cc0a9cea5f52cc8` at `https://project-memory-release.sociobot.in` **must not release**.
+
+- **High:** Chromium rejects the Git revision form pattern. It logs a console error and `/demo` accepts `bad revision!`, allowing malformed provenance in a released sample pack. The real workspace server rejects it, but client validation remains broken.
+- **High:** `https://api.sociobot.in/api/v1/products/project-memory-release/checkout` returns **404**, so the advertised $99/month team plan cannot be purchased.
+- **Medium:** static assets have no HTTP cache policy (`Cache-Control`/`ETag` absent).
+
+All local automated tests passed after `npm ci` (12 Playwright, 3 Rust), the release binary built successfully, live health returned the exact candidate SHA, and the live demo, privacy, offline, rate-limit, mobile, keyboard, and Axe checks otherwise passed. Full evidence and reproduction details are in `.factory/verification.md`.
+
 ## Repair on 2 September 2026
 
 - Reproduced the failed release on revision `sf-project-memory-release--xeqtbcc`. It was unhealthy with 11 restarts; container logs showed a panic at startup while running migrations: SQLite error code 5, `database is locked`. The listener was never reached, which caused both hostnames to return `000`.
