@@ -34,7 +34,7 @@ This is a normal source-entry path, creates a console error, and permits malform
 The live primary billing destination returns 404:
 
 ```
-HEAD https://api.sociobot.in/api/v1/products/project-memory-release/checkout
+GET https://api.sociobot.in/api/v1/products/project-memory-release/checkout
 HTTP/2 404
 ```
 
