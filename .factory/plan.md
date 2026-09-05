@@ -1,0 +1,319 @@
+# Venture plan — Project Memory Release
+
+**Status as of 2026-09-05:** M1 is active and **not accepted**. The deployed
+application identifies as `c0bd4753543b33af1825cfab78fde5983d6aac7c`; the
+repository head `46db283273a5782d38de2e7e2591ab7c6efd5d25` adds verification
+documentation only. No later product implementation is present.
+
+This plan distinguishes a working demonstration from an accepted customer
+capability. Future milestones are planned work, not public product claims.
+
+## Product contract
+
+### Customer, situation, and promise
+
+Product engineers need coding agents to use the current architecture,
+decisions, and product language while a codebase changes. Today they paste
+README excerpts into chats, keep a stale wiki, or rely on a vendor memory
+feature that has no release discipline.
+
+**Promise:** turn explicitly approved project decisions into a small,
+reviewable, versioned Markdown context pack before an agent uses it.
+
+The three jobs are:
+
+1. Select approved ADRs, glossary terms, and product decisions; inspect the
+   exact vendor-neutral pack before it is released.
+2. Release an immutable version with source path and Git revision provenance,
+   then identify a cited source whose revision has changed.
+3. Give a team scoped, durable access to its packs without repository crawling
+   or sharing one opaque vendor memory.
+
+The researched monetisation is **$99/team/month** for recurring releases,
+access control, and provenance. It is a target commercial model only. The
+current public product truthfully says new checkout is unavailable; it must not
+claim a purchasable plan until the factory registers and verifies it.
+
+### Evidence and wedge
+
+- [HN discussion](https://hn.algolia.com/api/v1/items/49387714), 2026-08-21:
+  developers describe tools becoming worse as complexity and enterprise
+  defaults grow.
+- [Claude Code issue #2511](https://github.com/anthropics/claude-code/issues/2511),
+  2025-06-24: a request to connect project knowledge has 613 reactions.
+
+The wedge is a review-and-release process for trusted project knowledge, not a
+generic RAG workspace. Notion, wikis, and vendor project memory store notes;
+this product makes a deliberate, small, reproducible context release.
+
+### Deliberate non-goals through M3
+
+- No vector database, chat UI, automatic documentation authoring, or AI call.
+- No default repository crawl, full repository mirror, or write access to Git.
+- No unverified payment claim, raw payment-provider integration, email
+  messaging, or account invitation system before its supporting service exists.
+- No HMRC capability; it is unrelated to this product.
+
+## Current implementation and acceptance record
+
+### What exists and is evidenced
+
+The Vite/TypeScript client and Rust/axum service let a visitor add manual
+sources (including one local Markdown-file import), select sources, create a
+Markdown release, copy/download it, and flag a release stale after a manual
+source-revision edit. The live application has `/`, `/demo`, `/workspace`,
+`/privacy`, `/terms`, `/health`, and a designed 404. Demo state is in the
+browser session and real-workspace API state is SQLite-backed.
+
+Evidence in [verification-3.md](./verification-3.md) records 11/11 declared
+claim commands, 21/21 Playwright tests, 3/3 Rust tests, successful format,
+Clippy, release-build and frontend-build checks, live demo/offline/accessibility
+checks, a 40-request API allowance followed by 429 with `Retry-After`, and a
+local SQLite restart check. This planning pass also reran `npm ci`, `npm test`,
+`npm run test:unit`, `cargo fmt -- --check`, `cargo clippy --locked
+--all-targets -- -D warnings`, and `npm run build`; all completed successfully.
+
+These are **demonstrations, not M1 acceptance**:
+
+| Demonstrated behavior | Why it is not the finished venture capability |
+| --- | --- |
+| Workspace records are keyed by a SHA-256 hash of a browser-held UUID, and QA used separate random keys. | It is a bearer-key workspace, not signed-user authentication, membership, role enforcement, or independently accepted tenant isolation. |
+| License restore passes against an intercepted valid response. | It does not demonstrate a registered subscription, a working checkout, or live billing entitlement. |
+| A local process restart retains data in a temporary SQLite directory. | It does not prove fleet `/data` durability or a backup/restore procedure. |
+| Revision labels are entered by the user and later compared. | There is no scoped Git connection or verification that the label reflects a repository revision. |
+| The demo is client-session isolated in the observed flow. | Its public database-isolation wording lacks the required exact regression assertion. |
+
+### M1 acceptance blockers (preserved from independent verification)
+
+1. **High — pre-release review is absent.** The only exact Markdown view is
+   inside an already persisted release. A real user spends the free release
+   before seeing the generated bytes. This contradicts the brief and the
+   landing copy.
+2. **High — eight public promises lack exact claim coverage.** The missing or
+   incomplete coverage is pre-release review, one-file Markdown import, copy
+   Markdown, demo-not-in-real-database isolation, license browser/storage and
+   request boundary, one-way workspace-key hashing, immutable released pack
+   after deletion, and restart persistence.
+3. **Medium — 390 px touch targets are too small.** The demo banner controls,
+   source actions/checkboxes, release actions, and footer links include
+   controls below 44 by 44 CSS pixels.
+4. **Medium — default runtime startup logging is silent.** With only `PORT`
+   supplied, `EnvFilter::from_default_env()` suppresses the required
+   configuration line.
+
+The latest verdict is therefore **FAIL — four findings and eight
+untested/incompletely tested public claims**. Earlier revision-validation,
+dead-checkout, cache-policy, and several prior claim gaps were repaired; they
+must stay covered, but they do not change this status.
+
+**Next milestone: M1 repair and independent re-verification.** M2 must not
+start until M1 receives a fresh PASS.
+
+## Architecture and data boundaries
+
+### Current, implemented architecture
+
+- One container: Vite-built vanilla TypeScript frontend served by Rust 2021
+  axum on `PORT` (default 8080).
+- `sqlx` with a product-local SQLite database. Runtime chooses `DATA_DIR`, then
+  `/data` when mounted, otherwise a local `data/` directory. The Docker image
+  is multi-stage and non-root; `/health` returns a build SHA.
+- Tables are `entries`, `releases`, and immutable `release_sources`. Every
+  database row is filtered by `workspace_id`, which is the SHA-256 digest of a
+  browser `pmr_workspace_key`. Packs retain their compiled content.
+- `/api` is in-process rate limited by the first `X-Forwarded-For` hop (40
+  requests per second per key); `/health` is exempt. API and health responses
+  are `no-store`.
+- Demo uses `sessionStorage` key `demo:project-memory-release:state` and a
+  seed endpoint. It does not deliberately attach the real workspace header.
+  The service worker caches the shell/sample so the demo can reload offline.
+- A pasted existing license is stored in browser local storage and the browser
+  calls the Sociobot verification endpoint. There is no server payment secret,
+  checkout registration, or authenticated account.
+
+Current data is limited to text the visitor enters, source paths/revision
+labels, compiled pack snapshots, timestamps, and a hashed bearer workspace
+identifier. No repository contents are fetched automatically. The service
+must not log source bodies, workspace keys, licenses, or any credential.
+
+### Required M2 data boundary
+
+M2 replaces bearer-key ownership with signed identity and organisation
+ownership. Every source, source revision, draft, pack, pack-source snapshot,
+membership, entitlement, and audit record must carry an organisation ID. All
+data reads/writes must derive that ID from a verified session, never a
+client-supplied organisation/workspace parameter. The migration must preserve
+existing data only with an explicit owner-claim process; otherwise it is
+exportable and deletable rather than silently reassigned.
+
+SQLite remains the single product database on `/data`; it is not shared
+PostgreSQL. M2 needs migrations, foreign keys, organisation-scoped unique
+constraints, backup/restore instructions, export/delete flows, and an
+integration test that proves two signed organisations cannot cross-read,
+cross-write, or infer each other's records. A demo is always an ephemeral,
+separate namespace and is never an organisation.
+
+### Required M3 Git boundary
+
+M3 may add one read-only Git provider connection only after M2. The user must
+explicitly connect, pick a repository, and select individual approved files;
+there is no crawl, background index, repository mirror, or write scope. Store
+the chosen path, resolved revision, connector/organisation ownership, and the
+content snapshot used in the pack. A stale check is user-triggered and compares
+the selected path against the provider revision. Provider access is evaluated
+for the connecting member and is not used to reveal documents to a member who
+lacks the corresponding product organisation access.
+
+## Design system and operational baseline
+
+The existing visual system remains the product-specific handwritten lab
+notebook defined in [design.md](./design.md): warm paper, drafting ink,
+blueprint controls, vermilion review marks, Caveat annotations, Atkinson
+Hyperlegible reading text, an 8 px rhythm, paper-sheet layering, and one
+220 ms page-settle motion with a reduced-motion equivalent. It is appropriate
+because provenance and review should feel like a dated engineering record.
+
+M1 repairs must retain one h1/main/skip link, visible focus, AA contrast,
+keyboard dialog handling, no horizontal overflow at 390 px, 44 px targets,
+and the current privacy/no-third-party-assets posture. Keep the original
+generated notebook artwork and its recorded provenance; no new imagery is
+needed for this repair.
+
+The service already has structured tracing, health, security headers and rate
+limiting. M1 must make the startup configuration line visible without `RUST_LOG`.
+M2 adds organisation audit events, backup/restore and delete/export operation
+checks. M3 adds provider error/reauthorisation states; it does not add a
+background crawler.
+
+## Milestones
+
+### M1 — reviewable manual context release (current; repair before acceptance)
+
+**Scope.** Finish the existing manual-source release job. Keep the one-click
+demo, manual source entry/file import, immutable released snapshots,
+vendor-neutral `project-memory://` references, stale-revision indication, and
+free-first-release behavior. Add a read-only exact draft preview before any
+write for both demo and real workspace; the final release action must persist
+the exact previewed bytes only after explicit confirmation. The real path must
+compile through one server-owned compiler; demo may use a deterministic local
+equivalent, but tests must prove preview bytes equal released/downloaded bytes.
+
+**Repair scope.** Make every interactive target at least 44 by 44 px at 390 px
+without overflow. Default tracing must emit the non-secret configuration source
+and data-directory decision when only `PORT` is set. Audit every current public
+sentence in landing, workspace, privacy, terms, and README: either remove it
+or give it one exact listed claim and one tagged regression.
+
+**Claims and tests to add or strengthen.** Each retained ID must have exactly
+one `@claim:<id>` test command in `.factory/claims.json`; one coverage test
+must also fail if a visitor-facing claim has no registry entry.
+
+| Claim ID | Observable proof from a clean sandbox |
+| --- | --- |
+| `reviewable-pack` | Select sources, open a pre-release draft, assert source paths/revisions/references, then confirm release and assert byte-for-byte equality with the preview and download. Run in demo and real workspace. |
+| `markdown-import` | Import one shipped Markdown fixture, save it deliberately, and assert the exact imported body/path appears in the selected-source and draft flow. |
+| `markdown-copy` | Copy a released pack and assert clipboard bytes include its vendor-neutral reference. |
+| `demo-database-isolation` | Establish a real workspace, mutate demo data, then read the real workspace and assert it is unchanged; assert no demo mutation sends an authenticated real write. |
+| `license-storage-boundary` | With a recorded valid verification response, assert the token/cache remain browser-local and the only cross-origin request containing it is the allowed Sociobot verification call. |
+| `workspace-key-hash` | Backend integration test persists a known workspace key, asserts only its SHA-256 digest is stored, and proves raw key lookup is impossible. |
+| `released-pack-immutable` | Release a selected source, delete that source, and assert the release's compiled Markdown remains byte-for-byte unchanged. |
+| `sqlite-restart-persistence` | Start against a temporary `/data`-equivalent directory, write state, restart the binary against the same directory, and assert it remains available. |
+
+Existing declared claims (`stale-citations`, `markdown-download`,
+`offline-demo`, `no-repository-indexing`, `free-first-release`, the two
+license-gated behaviors, and `first-party-assets`) remain required. License
+tests may use recorded responses; they must not imply a real checkout.
+
+**Definition of done.** All claims run individually after `npm ci`; `npm test`,
+`npm run test:unit`, `cargo fmt -- --check`, `cargo clippy --locked
+--all-targets -- -D warnings`, release build, and `npm run build` pass. Add
+browser rectangle assertions for all phone targets and a process test for the
+default startup log. Verify live `/`, `/demo`, `/workspace`, `/privacy`,
+`/terms`, and 404; run `verify-url.sh`, axe serious/critical checks, an offline
+demo reload, a 50-request rate-limit burst, and the new preview/isolation
+flows. A fresh independent verifier must record PASS. Until then M1 is not
+accepted.
+
+### M2 — signed organisations, durable ownership, and subscription access
+
+**Starts only after M1 PASS.** Replace the browser bearer workspace model with
+Sociobot Entra CIAM sign-in and verified sessions. Add organisation creation,
+owner/member roles, organisation-scoped sources/drafts/packs, audit events,
+export/delete, and a safe migration/claim-or-export path for legacy bearer
+workspaces. Do not ship email invitations in this milestone; membership changes
+must be authenticated and auditable.
+
+Add the $99/team/month subscription only after factory registration creates a
+working Sociobot billing product. Use its hosted checkout and verification
+interface; never embed a payment provider or assert that a fixture proves a
+purchase. Failed, expired, revoked, and unavailable entitlement states keep
+the free experience available and lock only paid recurring/team features.
+
+**M2 claims/tests.** In addition to M1 regression tests:
+
+- `signed-tenant-isolation`: two real test identities/organisations cannot
+  read, mutate, export, or guess each other's API/UI data, including forged
+  organisation IDs and pack URLs.
+- `membership-roles`: a member has only the documented rights; a release and
+  membership change create an audit event.
+- `account-export-delete`: an organisation can export its records and request
+  deletion; deleted data no longer returns.
+- `subscription-entitlement`: a billing test-mode/recorded contract response
+  gates the second release correctly, and a separately documented factory
+  verification proves the registered hosted checkout is reachable before copy
+  advertises it.
+
+**Definition of done.** Auth callback/session expiry/error paths work; every
+API query is organisation-scoped server-side; migrations are tested against a
+copy of the M1 schema; browser/API tenant-isolation tests pass; billing test
+mode is verified only after registration; persistence, rate limit, privacy,
+backup/restore and export/delete checks are recorded; independent QA passes.
+
+### M3 — scoped Git sources and verified stale citations
+
+**Starts only after M2 PASS.** Add one read-only Git provider flow: connect,
+select repository and individual file, preview the resolved content/revision,
+mark it approved, and include that snapshot in the existing preview/release
+flow. Add an explicit "check cited revisions" action and clear stale/current
+result. Continue to support manual source entry; do not import every document.
+
+**M3 claims/tests.** Use a provider sandbox/fixture to prove selected-file-only
+access, no default crawl, no write request, correct resolved-revision
+provenance, stale detection after a fixture revision changes, denied/revoked
+scope recovery, and organisation/provider access boundaries. The pack preview,
+snapshot immutability, export, and M1/M2 claims remain regression tests.
+
+**Definition of done.** A connected member can release one explicitly approved
+Git file from the demo/provider fixture; a denied scope does not leak a path or
+content; no repository mirror/index exists on disk; published packs retain the
+reviewed content/revision; provider token storage is encrypted and never sent
+to the browser after authorisation; independent QA passes.
+
+## External dependencies and risks
+
+| Dependency / risk | Milestone | Current state and action that retires it |
+| --- | --- | --- |
+| Fresh independent QA | M1 | Required after repair. It is a verification dependency, not a reason to declare the current prototype accepted. |
+| Sociobot Entra CIAM application, allowed redirect origins, and test identities | M2 | Not configured or evidenced. Factory/operator must provision it; a product worker must not request or handle production credentials. |
+| Sociobot billing registration for `project-memory-release`, $99/team/month, hosted checkout and verification contract | M2 | New checkout is explicitly unavailable in the current UI. Factory/operator registration and test-mode reachability are required before any purchase claim. |
+| Git provider app/OAuth installation and a scoped test repository | M3 | Not implemented. Obtain read-only contents scope and a test fixture; do not request broad repository access or crawl. |
+| Durable `/data` mount, one replica, backup/restore operational evidence | M2 | Local restart is demonstrated only. Fleet provisioning is outside product code; a deployment verification must prove the mount and recovery procedure. |
+| Pilot behavior | M3 onward | Run two-release pilots; measure whether at least 75% of agent PRs cite a current pack and stale references fall 40%. If not, interview pilots before adding integrations. |
+
+There is no AI-model, email/messaging, HMRC, payment-processor, or shared
+PostgreSQL dependency in the current milestone. Those capabilities are not
+implemented or implied by this plan.
+
+## Evidence index
+
+- Current independent verdict and exact repair list:
+  [verification-3.md](./verification-3.md).
+- Earlier defects and their resolved disposition:
+  [verification.md](./verification.md) and
+  [verification-2.md](./verification-2.md).
+- Current implementation/verification handoff:
+  [handoff.md](./handoff.md).
+- Implemented claim registry and test source:
+  [claims.json](./claims.json) and [tests/claims.spec.ts](../tests/claims.spec.ts).
+- Product opportunity and visual system:
+  [brief.json](./brief.json) and [design.md](./design.md).
