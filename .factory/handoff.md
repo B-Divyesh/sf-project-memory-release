@@ -1,48 +1,91 @@
-# Venture-plan handoff — Project Memory Release
+# M1 repair handoff — Project Memory Release
 
-## Result
+## Status
 
-Added [plan.md](./plan.md), the evidence-backed M1–M3 venture contract. The
-current product remains **M1 active, not accepted**. No application code, tests,
-deployment, data, infrastructure, billing resource, or secret was changed.
+The M1 repair implementation is deployed to
+<https://project-memory-release.sociobot.in>.
 
-The public deployment identifies as
-`c0bd4753543b33af1825cfab78fde5983d6aac7c`; repository head
-`46db283273a5782d38de2e7e2591ab7c6efd5d25` contains verification documentation
-only. The controlling review is [verification-3.md](./verification-3.md):
-**FAIL — four findings and eight untested/incompletely tested public claims.**
+- **Implementation SHA:** `5b1aedd4200f6e3c60a801eb72603aa039b8356f`
+- **Previous implementation SHA:** `c0bd4753543b33af1825cfab78fde5983d6aac7c`
+- **Previous documentation-only SHA:** `46db283273a5782d38de2e7e2591ab7c6efd5d25`
+- **Live health:** `200`, reporting the implementation SHA above.
+- **Milestone:** M1 repair is complete locally and deployed. It remains pending
+  a fresh independent verification PASS; M2 must not start yet.
 
-## What was verified for this planning pass
+## Job, audience, and first action
 
-- Live `/health` returned the deployed SHA above; the landing response returned
-  200 with the product security and cache headers.
-- `npm ci`, `npm test` (Playwright last run passed), `npm run test:unit`
-  (3/3), `cargo fmt -- --check`, `cargo clippy --locked --all-targets -- -D
-  warnings`, and `npm run build` completed successfully.
-- The prior independent evidence records 11/11 declared claim commands and
-  21/21 Playwright tests, but that is not a release acceptance because the
-  required user-facing behavior and claim coverage remain incomplete.
+The product releases trusted context for coding agents. It is for product
+engineers whose agents need current decisions, architecture, and product
+language. On a fresh desktop and phone browser, before scrolling, the first
+action is **Try it with sample data**.
 
-## Next work
+## What changed
 
-The next milestone is **M1 repair and fresh independent verification**:
+1. Added an exact Markdown review step before release.
+   - Real workspaces call `POST /api/releases/preview`; the Rust service
+     compiles the source snapshot.
+   - Confirmation sends the reviewed bytes and date back to `POST /api/releases`.
+     The service recompiles and rejects a changed preview; it persists only
+     byte-identical reviewed Markdown.
+   - The demo uses the same preview/confirm sequence with a deterministic
+     local compiler. A reset also removes any pending draft.
+2. Completed the claims contract.
+   - `.factory/claims.json` now lists 19 public claims with individual
+     commands.
+   - Added outcome regressions for one-file Markdown import, clipboard copy,
+     demo/database isolation, browser-only license storage/request boundary,
+     one-way workspace-key hashing, released-pack immutability, restart
+     persistence, and unavailable checkout.
+   - A browser guard compares runtime `data-claim` markers with the registry.
+3. Made mobile controls meet the 44 × 44 CSS-pixel baseline.
+   - Banner controls, source checkboxes/actions, Markdown actions, summaries,
+     wordmark, and footer/legal links now have measured touch targets.
+4. Made the required startup line visible without `RUST_LOG`.
+   - Default tracing is `info` and emits non-secret port/data-directory source
+     fields. A spawned binary test uses only `PORT`.
+5. Kept the product within its performance budget.
+   - The two self-hosted Latin font files total 108,928 bytes. The final build
+     has 9.65 KB gzipped JavaScript and 3.74 KB gzipped CSS.
 
-1. Add byte-identical exact Markdown preview before persistence and a separate
-   confirmed release action for demo and real workspaces.
-2. Add or remove the eight public claims identified in verification 3, with one
-   exact tagged regression per retained claim and a coverage guard.
-3. Correct every 390 px touch target to at least 44 × 44 CSS pixels.
-4. Emit the required non-secret startup configuration line with only `PORT`.
-5. Re-run all claims and quality gates, then obtain a fresh PASS.
+## Verification
 
-M2 (Sociobot Entra CIAM, signed organisation isolation, and a registered
-$99/team/month subscription) starts only after M1 passes. M3 adds one scoped,
-read-only Git-provider flow only after M2. New checkout, sign-in, real billing,
-and Git access are not currently implemented. Their external prerequisites are
-listed separately in [plan.md](./plan.md); no production credential is needed
-from a product worker.
+From a clean dependency install (`npm ci`), all 19 declared claim commands
+were run individually and passed. The final full suite passed:
 
-## How to reproduce current checks
+- `npm test` — 28/28 Playwright tests.
+- `npm run test:unit` — 6/6 Rust tests, including a spawned binary restart
+  test and a `PORT`-only startup-log test.
+- `cargo fmt -- --check` — passed.
+- `cargo clippy --locked --all-targets -- -D warnings` — passed.
+- `CARGO_TARGET_DIR=/tmp/pmr-repair-release BUILD_SHA=5b1aedd… cargo build --release --locked` — passed.
+- `npm run build` — produced `dist/` with the asset sizes above.
+- The factory ACR/container deployment succeeded with `WO_DATA_DIR=/data`.
+  The deployment tool preserved the product configuration/probes, uses the
+  durable product mount, and pins SQLite to one replica.
+
+Live checks used fresh browser contexts only. The desktop demo selected a
+source, previewed the vendor-neutral reference, confirmed the release, kept
+the demo label visible, and reset to the three-source/one-release sample. A
+separate known empty real workspace was unchanged by demo mutation. Exiting
+the demo opened an empty real workspace. A 390 px phone showed the same job
+and first action without horizontal overflow.
+
+`/opt/fleet/lib/verify-url.sh` passed against live HTTPS: title, language,
+one `h1`, `main`, image alt text, labelled buttons, and no browser errors.
+Live Playwright Axe checks found zero serious or critical issues on `/`,
+`/demo`, `/workspace`, `/privacy`, `/terms`, and the designed expected 404.
+The direct `@axe-core/cli` command was attempted twice but its Selenium
+ChromeDriver could not start the supplied Chrome binary in this worker; this
+is a verifier-environment limitation, not an Axe finding. The repository's
+Playwright Axe integration ran successfully.
+
+The live API rate-limit burst returned 40 × 200 then 10 × 429, and every 429
+had `Retry-After: 1`. A live missing route returned the designed 404 and was
+treated as expected. The Lighthouse CLI was also attempted with the supplied
+Chrome binary but its tab crashed in this worker; the current build reduced
+font payload and retains the earlier performance budget margins.
+
+## How to run
 
 ```sh
 npm ci
@@ -51,8 +94,25 @@ npm run test:unit
 cargo fmt -- --check
 cargo clippy --locked --all-targets -- -D warnings
 npm run build
+PORT=8080 DATA_DIR=./data cargo run
 ```
 
-For the full prior independent QA procedure and live evidence, see
-[verification-3.md](./verification-3.md). Do not deploy this documentation
-change; this work order has no deployment step.
+The one-click sandbox is `/demo`. Select sources, use **Review selected
+Markdown**, then use **Release reviewed pack**. `Reset demo` restores the
+sample and `Start for real` discards the demo session.
+
+## Remaining dependencies and limits
+
+- A fresh independent verifier must issue the M1 PASS. This is the only
+  remaining M1 acceptance dependency.
+- M2 requires Sociobot Entra CIAM, signed organisation ownership, export/delete,
+  and backup/restore evidence. The current bearer workspace key is not an M2
+  account or membership system.
+- New $99/team/month checkout remains unavailable. Existing-license recovery
+  uses recorded verification responses in tests; it does not prove a registered
+  subscription or hosted checkout. Factory billing registration is the M2
+  dependency.
+- M3 requires a scoped read-only Git provider app and fixture repository. No
+  provider connection, crawl, or repository indexing is implemented in M1.
+- No AI feature is needed for the M1 release workflow. No external provider
+  credentials were added or used.
