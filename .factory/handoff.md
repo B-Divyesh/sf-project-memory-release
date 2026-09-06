@@ -8,6 +8,8 @@ The M1 repair implementation is deployed to
 - **Implementation SHA:** `5b1aedd4200f6e3c60a801eb72603aa039b8356f`
 - **Previous implementation SHA:** `c0bd4753543b33af1825cfab78fde5983d6aac7c`
 - **Previous documentation-only SHA:** `46db283273a5782d38de2e7e2591ab7c6efd5d25`
+- **Documentation report SHA:** `4a7b9fc09d5515c264b2ff0e4fe83222873d2127`
+  (post-deployment report only; it is not the deployed image)
 - **Live health:** `200`, reporting the implementation SHA above.
 - **Milestone:** M1 repair is complete locally and deployed. It remains pending
   a fresh independent verification PASS; M2 must not start yet.
