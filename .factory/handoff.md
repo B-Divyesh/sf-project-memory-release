@@ -1,9 +1,11 @@
-# M1 acceptance handoff — Project Memory Release
+# Review 1 handoff — Project Memory Release
 
 ## Status
 
-The M1 repair implementation is deployed and has passed fresh independent
-verification at <https://project-memory-release.sociobot.in>.
+The M1 repair implementation remains deployed at
+<https://project-memory-release.sociobot.in>. Verification 4 passed, but the
+fresh strict [review 1](./review-1.md) found three interface-contract issues.
+The current verdict is **FAIL — 3 findings and 0 untested claims**.
 
 - **Implementation SHA:** `5b1aedd4200f6e3c60a801eb72603aa039b8356f`
 - **Previous implementation SHA:** `c0bd4753543b33af1825cfab78fde5983d6aac7c`
@@ -17,8 +19,9 @@ verification at <https://project-memory-release.sociobot.in>.
   built with the live identity.
 - **Independent verification:** [verification-4.md](./verification-4.md) —
   **PASS**, 0 findings and 0 untested claims.
-- **Milestone:** M1 is independently accepted. M2 may start as a separate
-  milestone when its external dependencies are ready.
+- **Strict review:** [review-1.md](./review-1.md) — **FAIL**, 1 medium and 2 low
+  findings, 0 untested claims.
+- **Milestone:** M1 remains active. Repair and recheck review 1 before M2.
 
 ## Job, audience, and first action
 
@@ -55,9 +58,29 @@ action is **Try it with sample data**.
    - The two self-hosted Latin font files total 108,928 bytes. The final build
      has 9.65 KB gzipped JavaScript and 3.74 KB gzipped CSS.
 
-## Verification
+## Current review
 
-Fresh independent verification on 6 September 2026 passed all 19 claim
+Review 1 independently reran all 19 claim commands and the complete quality
+gates from a clean detached checkout. The live demo and real workspace release
+flows, backend isolation and persistence, offline reload, and rate limiting all
+worked. Lighthouse mobile scored 99 performance, 100 accessibility, 100 best
+practices, and 100 SEO.
+
+Three mandatory details remain:
+
+1. The orange focus outline is 2.63:1 against the paper background; it must be
+   at least 3:1.
+2. SPA navigation focuses the new heading, but the polite route-announcement
+   region stays empty.
+3. The external Param Factory footer link does not tell visitors that it leaves
+   the product.
+
+No product code was changed during review. See [review-1.md](./review-1.md) for
+the full evidence and required repairs.
+
+## Earlier verification
+
+Independent verification 4 on 6 September 2026 passed all 19 claim
 commands individually, the 28-test browser suite, the six-test Rust suite,
 formatting, Clippy, release build, production build, live desktop/phone flows,
 Axe, Lighthouse, offline reload, isolation, security headers, designed 404,
@@ -120,7 +143,9 @@ The one-click sandbox is `/demo`. Select sources, use **Review selected
 Markdown**, then use **Release reviewed pack**. `Reset demo` restores the
 sample and `Start for real` discards the demo session.
 
-## Remaining dependencies and limits
+## Remaining work, dependencies, and limits
+
+- M1 needs the three review-1 interface repairs above and a fresh review.
 
 - M2 requires Sociobot Entra CIAM, signed organisation ownership, export/delete,
   and backup/restore evidence. The current bearer workspace key is not an M2

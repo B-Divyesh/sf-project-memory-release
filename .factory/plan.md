@@ -1,11 +1,10 @@
 # Venture plan — Project Memory Release
 
-**Status as of 2026-09-06:** M1 repair is deployed as
-`5b1aedd4200f6e3c60a801eb72603aa039b8356f` and is awaiting fresh independent
-verification. M1 is therefore active and **not yet independently accepted**.
-The previous deployed implementation was
-`c0bd4753543b33af1825cfab78fde5983d6aac7c`; documentation commit
-`46db283273a5782d38de2e7e2591ab7c6efd5d25` described its failed review.
+**Status as of 2026-09-06:** M1 implementation
+`5b1aedd4200f6e3c60a801eb72603aa039b8356f` remains deployed. Verification 4
+passed, but the later strict [review 1](./review-1.md) found three mandatory
+accessibility and site-structure issues. M1 is active and **not accepted by
+review 1** until those findings are repaired and rechecked.
 
 This plan distinguishes a working demonstration from an accepted customer
 capability. Future milestones are planned work, not public product claims.
@@ -69,11 +68,11 @@ and a designed 404. Demo state is in the browser session and real-workspace
 API state is SQLite-backed.
 
 The historical failure evidence in [verification-3.md](./verification-3.md)
-records the baseline before this repair. The deployed repair has 19 declared
-claims, 28 Playwright tests, six Rust tests, a real binary restart test, a
-default-environment startup-log test, and fresh live browser/accessibility/rate
-limit checks. Exact command and live evidence are recorded in the current
-handoff; a new independent verdict is still required.
+records the baseline before the core-flow repair. The deployed implementation
+has 19 declared claims, 28 Playwright tests, six Rust tests, a real binary
+restart test, a default-environment startup-log test, and live browser,
+accessibility, performance, and rate-limit evidence. Review 1 reran every claim
+successfully but found three separate interface-contract issues.
 
 These are **demonstrations, not M1 acceptance**:
 
@@ -83,26 +82,23 @@ These are **demonstrations, not M1 acceptance**:
 | License restore passes against an intercepted valid response. | It does not demonstrate a registered subscription, a working checkout, or live billing entitlement. |
 | A local process restart retains data in a temporary SQLite directory. | It does not prove fleet `/data` durability or a backup/restore procedure. |
 | Revision labels are entered by the user and later compared. | There is no scoped Git connection or verification that the label reflects a repository revision. |
-| The demo is client-session isolated in the observed flow. | Its public database-isolation wording lacks the required exact regression assertion. |
+| The demo is client-session isolated and its exact database-isolation regression passes. | It is still a demonstration boundary, not an authenticated organisation boundary. |
 
-### M1 acceptance blockers from verification 3
+### Current M1 review blockers
 
-All four recorded defects are repaired in `5b1aedd` and covered by outcomes,
-but independent verification has not yet issued the required new PASS:
+The earlier verification findings remain repaired. Review 1 found three new
+issues that must close before M1 acceptance:
 
-1. **Pre-release review:** `/api/releases/preview` compiles the real-workspace
-   pack server-side. Confirmation only persists bytes equal to the preview;
-   demo uses the same deterministic preview/confirmation pattern.
-2. **Claims contract:** the registry now has 19 commands, including the seven
-   missing behaviors and a live-route claim-marker coverage guard.
-3. **Phone targets:** a 390 px browser regression measures every visible demo
-   link, button, input, select, textarea, and summary at 44 × 44 px or larger.
-4. **Startup log:** default tracing now uses `info`; a spawned binary with
-   only `PORT` proves the non-secret configuration line appears.
+1. **Focus contrast:** the 3 px orange focus ring is 2.63:1 against the paper
+   background, below the required 3:1.
+2. **Route announcement:** SPA navigation focuses the new heading, but the
+   polite live region remains empty instead of announcing the route heading.
+3. **External-link indication:** the Param Factory footer link does not tell
+   visitors that it leaves the product.
 
-Earlier revision-validation, dead-checkout, cache-policy, and prior claim
-gaps remain covered. **Next milestone: independent M1 re-verification.** M2
-must not start until that PASS arrives.
+Earlier pre-release review, revision validation, checkout, cache, claims,
+phone-target, and startup-log findings remain closed. **Next work: repair and
+recheck review 1.** M2 must not start until M1 receives a new PASS.
 
 ## Architecture and data boundaries
 
@@ -182,7 +178,7 @@ background crawler.
 
 ## Milestones
 
-### M1 — reviewable manual context release (current; repair before acceptance)
+### M1 — reviewable manual context release (current; review repair required)
 
 **Scope.** Finish the existing manual-source release job. Keep the one-click
 demo, manual source entry/file import, immutable released snapshots,
@@ -289,7 +285,7 @@ to the browser after authorisation; independent QA passes.
 
 | Dependency / risk | Milestone | Current state and action that retires it |
 | --- | --- | --- |
-| Fresh independent QA | M1 | Required after repair. It is a verification dependency, not a reason to declare the current prototype accepted. |
+| Review 1 accessibility and site-structure repair | M1 | Fix focus contrast, the route live announcement, and the external-link indication; then run a fresh review. |
 | Sociobot Entra CIAM application, allowed redirect origins, and test identities | M2 | Not configured or evidenced. Factory/operator must provision it; a product worker must not request or handle production credentials. |
 | Sociobot billing registration for `project-memory-release`, $99/team/month, hosted checkout and verification contract | M2 | New checkout is explicitly unavailable in the current UI. Factory/operator registration and test-mode reachability are required before any purchase claim. |
 | Git provider app/OAuth installation and a scoped test repository | M3 | Not implemented. Obtain read-only contents scope and a test fixture; do not request broad repository access or crawl. |
@@ -302,8 +298,8 @@ implemented or implied by this plan.
 
 ## Evidence index
 
-- Current independent verdict and exact repair list:
-  [verification-3.md](./verification-3.md).
+- Current strict verdict and exact repair list: [review-1.md](./review-1.md).
+- Latest earlier independent PASS: [verification-4.md](./verification-4.md).
 - Earlier defects and their resolved disposition:
   [verification.md](./verification.md) and
   [verification-2.md](./verification-2.md).
