@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::{
@@ -86,9 +86,29 @@ struct ReleaseInput {
     version: String,
     notes: String,
     entry_ids: Vec<String>,
+    preview_date: String,
+    preview_content: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReleasePreviewInput {
+    version: String,
+    notes: String,
+    entry_ids: Vec<String>,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ReleasePreview {
+    version: String,
+    notes: String,
+    entry_ids: Vec<String>,
+    preview_date: String,
+    content: String,
+}
+
+#[derive(Debug, Serialize)]
 struct ErrorBody {
     error: String,
 }
@@ -99,14 +119,18 @@ type ApiResult<T> = Result<Json<T>, (StatusCode, Json<ErrorBody>)>;
 async fn main() {
     tracing_subscriber::fmt()
         .json()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_writer(std::io::stderr)
+        .with_env_filter(log_filter())
         .init();
-    let port = std::env::var("PORT")
-        .ok()
-        .and_then(|v| v.parse::<u16>().ok())
-        .unwrap_or(8080);
+    let (port, port_source) = match std::env::var("PORT") {
+        Ok(value) => match value.parse::<u16>() {
+            Ok(port) => (port, "supplied"),
+            Err(_) => (8080, "default"),
+        },
+        Err(_) => (8080, "default"),
+    };
     let build_sha = option_env!("BUILD_SHA").unwrap_or("dev").to_owned();
-    let (data_dir, supplied) = data_directory();
+    let (data_dir, data_dir_source) = data_directory();
     std::fs::create_dir_all(&data_dir).expect("create data directory");
     let database_path = data_dir.join("project-memory-release.sqlite3");
     let pool = open_database_with_retry(
@@ -117,13 +141,14 @@ async fn main() {
     )
     .await
     .expect("initialize SQLite");
-    info!(port, data_dir = %data_dir.display(), data_dir_source = if supplied { "supplied" } else { "generated-default" }, "configuration ready");
+    info!(port, port_source, data_dir = %data_dir.display(), data_dir_source, "configuration ready");
 
     let state = AppState { pool, build_sha };
     let api = Router::new()
         .route("/state", get(get_state))
         .route("/entries", post(create_entry))
         .route("/entries/{id}", put(update_entry).delete(delete_entry))
+        .route("/releases/preview", post(preview_release))
         .route("/releases", post(create_release))
         .route("/demo/session", post(demo_session))
         .layer(middleware::from_fn_with_state(
@@ -157,6 +182,14 @@ async fn main() {
         .with_graceful_shutdown(shutdown())
         .await
         .expect("serve application");
+}
+
+fn log_filter() -> tracing_subscriber::EnvFilter {
+    match std::env::var("RUST_LOG") {
+        Ok(value) if !value.trim().is_empty() => tracing_subscriber::EnvFilter::try_new(value)
+            .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        _ => tracing_subscriber::EnvFilter::new("info"),
+    }
 }
 
 #[derive(Debug)]
@@ -255,14 +288,14 @@ fn migration_error_is_busy(error: &MigrateError) -> bool {
     }
 }
 
-fn data_directory() -> (PathBuf, bool) {
+fn data_directory() -> (PathBuf, &'static str) {
     if let Ok(dir) = std::env::var("DATA_DIR") {
-        return (PathBuf::from(dir), true);
+        return (PathBuf::from(dir), "supplied");
     }
     if Path::new("/data").is_dir() {
-        (PathBuf::from("/data"), false)
+        (PathBuf::from("/data"), "durable-mount")
     } else {
-        (PathBuf::from("data"), false)
+        (PathBuf::from("data"), "local-default")
     }
 }
 
@@ -475,43 +508,25 @@ async fn create_release(
     Json(input): Json<ReleaseInput>,
 ) -> ApiResult<Release> {
     let workspace = workspace_id(&headers)?;
+    validate_release_details(&input.version, &input.notes, &input.entry_ids)?;
     let version = input.version.trim();
-    if version.is_empty() || version.len() > 40 {
-        return Err(bad_request("Enter a version with 1 to 40 characters."));
-    }
-    if input.notes.len() > 180 {
-        return Err(bad_request("Keep the review note under 180 characters."));
-    }
-    if input.entry_ids.is_empty() {
+    let preview_date = NaiveDate::parse_from_str(&input.preview_date, "%Y-%m-%d")
+        .map_err(|_| bad_request("The Markdown preview is no longer valid. Review it again."))?;
+    let entries = release_entries(&state.pool, &workspace, &input.entry_ids).await?;
+    let expected_content = compile_pack(version, &preview_date.to_string(), &entries);
+    if input.preview_content != expected_content {
         return Err(bad_request(
-            "Select at least one approved source before releasing.",
+            "A selected source changed after the preview. Review the Markdown again before releasing.",
         ));
     }
-    let mut entries = Vec::with_capacity(input.entry_ids.len());
-    for id in &input.entry_ids {
-        let row = sqlx::query("SELECT id, kind, title, body, source_path, source_revision, updated_at FROM entries WHERE id = ? AND workspace_id = ?").bind(id).bind(&workspace).fetch_optional(&state.pool).await.map_err(internal_error)?;
-        let Some(r) = row else {
-            return Err(bad_request(
-                "One selected source no longer exists. Reload and try again.",
-            ));
-        };
-        entries.push(Entry {
-            id: r.get(0),
-            kind: r.get(1),
-            title: r.get(2),
-            body: r.get(3),
-            source_path: r.get(4),
-            source_revision: r.get(5),
-            updated_at: r.get(6),
-        });
-    }
     let created_at = Utc::now().to_rfc3339();
-    let content = compile_pack(version, &created_at[..10], &entries);
     let release = Release {
         id: Uuid::new_v4().to_string(),
         version: version.into(),
         notes: input.notes.trim().into(),
-        content,
+        // The equality check above means this is the exact byte sequence that
+        // the user reviewed, not a fresh rendering made at confirmation time.
+        content: input.preview_content,
         created_at,
         stale_count: 0,
     };
@@ -538,6 +553,78 @@ async fn create_release(
     }
     tx.commit().await.map_err(internal_error)?;
     Ok(Json(release))
+}
+
+async fn preview_release(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(input): Json<ReleasePreviewInput>,
+) -> ApiResult<ReleasePreview> {
+    let workspace = workspace_id(&headers)?;
+    validate_release_details(&input.version, &input.notes, &input.entry_ids)?;
+    let entries = release_entries(&state.pool, &workspace, &input.entry_ids).await?;
+    let preview_date = Utc::now().date_naive().to_string();
+    Ok(Json(ReleasePreview {
+        version: input.version.trim().into(),
+        notes: input.notes.trim().into(),
+        entry_ids: input.entry_ids,
+        content: compile_pack(input.version.trim(), &preview_date, &entries),
+        preview_date,
+    }))
+}
+
+fn validate_release_details(
+    version_input: &str,
+    notes: &str,
+    entry_ids: &[String],
+) -> Result<(), (StatusCode, Json<ErrorBody>)> {
+    if version_input.trim().is_empty() || version_input.len() > 40 {
+        return Err(bad_request("Enter a version with 1 to 40 characters."));
+    }
+    if notes.len() > 180 {
+        return Err(bad_request("Keep the review note under 180 characters."));
+    }
+    if entry_ids.is_empty() {
+        return Err(bad_request(
+            "Select at least one approved source before releasing.",
+        ));
+    }
+    let mut unique_ids = std::collections::HashSet::new();
+    if !entry_ids.iter().all(|id| unique_ids.insert(id)) {
+        return Err(bad_request("Select each approved source only once."));
+    }
+    Ok(())
+}
+
+async fn release_entries(
+    pool: &SqlitePool,
+    workspace: &str,
+    entry_ids: &[String],
+) -> Result<Vec<Entry>, (StatusCode, Json<ErrorBody>)> {
+    let mut entries = Vec::with_capacity(entry_ids.len());
+    for id in entry_ids {
+        let row = sqlx::query("SELECT id, kind, title, body, source_path, source_revision, updated_at FROM entries WHERE id = ? AND workspace_id = ?")
+            .bind(id)
+            .bind(workspace)
+            .fetch_optional(pool)
+            .await
+            .map_err(internal_error)?;
+        let Some(row) = row else {
+            return Err(bad_request(
+                "One selected source no longer exists. Reload and review again.",
+            ));
+        };
+        entries.push(Entry {
+            id: row.get(0),
+            kind: row.get(1),
+            title: row.get(2),
+            body: row.get(3),
+            source_path: row.get(4),
+            source_revision: row.get(5),
+            updated_at: row.get(6),
+        });
+    }
+    Ok(entries)
 }
 
 async fn demo_session() -> Json<ProjectState> {
@@ -730,6 +817,55 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(migration_count, 1);
+        pool.close().await;
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    // @claim:workspace-key-hash
+    #[tokio::test]
+    async fn claim_workspace_key_hash_persists_only_the_digest() {
+        let directory =
+            std::env::temp_dir().join(format!("project-memory-hash-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&directory).unwrap();
+        let database_path = directory.join("project-memory-release.sqlite3");
+        let pool = open_database_with_retry(
+            &database_path,
+            1,
+            Duration::from_millis(1),
+            Duration::from_millis(50),
+        )
+        .await
+        .unwrap();
+        let raw_key = "known-workspace-key-1234567890";
+        let mut headers = HeaderMap::new();
+        headers.insert("x-workspace-key", HeaderValue::from_static(raw_key));
+        let digest = workspace_id(&headers).unwrap();
+        sqlx::query("INSERT INTO entries (id, workspace_id, kind, title, body, source_path, source_revision, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+            .bind("hash-test-entry")
+            .bind(&digest)
+            .bind("ADR")
+            .bind("Keep keys hashed")
+            .bind("The raw browser key is never persisted.")
+            .bind("docs/adr/hash.md")
+            .bind("abc123")
+            .bind("2026-09-06T00:00:00Z")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let stored: String = sqlx::query_scalar("SELECT workspace_id FROM entries WHERE id = ?")
+            .bind("hash-test-entry")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let raw_matches: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM entries WHERE workspace_id = ?")
+                .bind(raw_key)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(stored, digest);
+        assert_ne!(stored, raw_key);
+        assert_eq!(raw_matches, 0);
         pool.close().await;
         std::fs::remove_dir_all(directory).unwrap();
     }

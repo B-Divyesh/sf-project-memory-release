@@ -1,6 +1,8 @@
 # Landing copy audit
 
-Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. Headings, labels, and actions are included because a visitor reads them as part of the page.
+Audited 6 September 2026. Counts treat hyphenated terms and `$99` as one word.
+Headings, labels, and actions are included because a visitor reads them as part
+of the page.
 
 | Words | Copy |
 |---:|---|
@@ -21,7 +23,7 @@ Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. H
 | 3 | How it works |
 | 3 | Add approved sources |
 | 8 | Paste a record or import one Markdown file. |
-| 4 | You choose every source. |
+| 5 | You choose every source. |
 | 3 | Review the pack |
 | 9 | Select records and read the exact Markdown before release. |
 | 3 | Release a version |
@@ -29,11 +31,9 @@ Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. H
 | 7 | Later source revisions show as stale. |
 | 5 | What it does not do |
 | 8 | It does not crawl or index a repository. |
-| 8 | It does not write decisions for your team. |
-| 7 | It does not provide a chat interface. |
+| 5 | You add each approved source. |
 | 5 | How project data is handled |
-| 5 | You add each approved record. |
-| 12 | The service stores those records and releases in its own SQLite database. |
+| 8 | The service keeps real records in SQLite. |
 | 8 | Demo changes stay in an isolated browser session. |
 | 4 | Read the privacy policy |
 | 2 | Team licenses |
@@ -47,7 +47,9 @@ Audited 2 September 2026. Counts treat hyphenated terms and `$99` as one word. H
 | 8 | Release approved project knowledge as versioned context packs. |
 | 6 | Generated illustration made for this product. |
 
-Result: longest sentence: 12 words. No sentence exceeds 22 words. No banned words appear. The first screen says the job, user, first action, next result, privacy, provenance, and price in one breath.
+Result: longest sentence: 12 words. No sentence exceeds 22 words. No banned
+words appear. The first screen says the job, audience, first action, next
+result, privacy, provenance, and free allowance in one breath.
 
 ## Terminology
 
@@ -55,6 +57,7 @@ Result: longest sentence: 12 words. No sentence exceeds 22 words. No banned word
 |---|---|
 | Approved knowledge item | source |
 | Compiled Markdown artifact | context pack |
+| Read-only version before persistence | preview |
 | Published snapshot | release |
 | Source commit or tag | Git revision |
 | Out-of-date released reference | stale citation |
@@ -62,4 +65,5 @@ Result: longest sentence: 12 words. No sentence exceeds 22 words. No banned word
 | Existing paid entitlement | team license |
 | Browser-held workspace credential | workspace key |
 
-Catalog description: **Release approved project decisions as versioned context packs for coding agents.** (78 characters)
+Catalog description: **Release approved project decisions as versioned context
+packs for coding agents.** (78 characters)

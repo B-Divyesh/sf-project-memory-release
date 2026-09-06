@@ -19,6 +19,14 @@ type Release = {
   staleCount: number;
 };
 type ProjectState = { entries: Entry[]; releases: Release[] };
+type DraftPreview = {
+  version: string;
+  notes: string;
+  entryIds: string[];
+  previewDate: string;
+  content: string;
+  createdAt: string;
+};
 
 const PRODUCT = "Project Memory Release";
 const DEMO_KEY = "demo:project-memory-release:state";
@@ -29,6 +37,7 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 let currentState: ProjectState | null = null;
 let selected = new Set<string>();
 let liveMessage = "";
+let draftPreview: DraftPreview | null = null;
 
 const sampleState = (): ProjectState => ({
   entries: [
@@ -95,6 +104,7 @@ function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
 }
 
 function navigate(path: string): void {
+  draftPreview = null;
   history.pushState({}, "", path);
   window.scrollTo({ top: 0, behavior: "smooth" });
   void render().then(() => document.querySelector<HTMLElement>("h1")?.focus());
@@ -102,7 +112,7 @@ function navigate(path: string): void {
 
 function header(): string {
   const here = route();
-  return `${isDemo() ? `<div class="demo-banner"><div class="wrap"><strong>Demo — sample data, nothing is saved</strong><button class="link-button" data-action="reset-demo">Reset demo</button><a href="/workspace" data-nav data-action="leave-demo">Start for real</a></div></div>` : ""}
+  return `${isDemo() ? `<div class="demo-banner" data-claim="demo-privacy demo-database-isolation"><div class="wrap"><strong>Demo — sample data, nothing is saved</strong><button class="link-button" data-action="reset-demo">Reset demo</button><a href="/workspace" data-nav data-action="leave-demo">Start for real</a></div></div>` : ""}
   <header class="site-header">
     <div class="wrap nav-row">
       <a class="wordmark" href="/" data-nav aria-label="Project Memory Release home">Project Memory <span class="wordmark-mark">Release</span></a>
@@ -132,14 +142,14 @@ function landing(): string {
         <h1 tabindex="-1">Release trusted context for coding agents</h1>
         <p class="lead">For product engineers whose agents need current decisions, architecture, and product language.</p>
         <div class="actions"><a class="button" href="/demo" data-nav>Try it with sample data</a><span class="after-action">A reviewable context pack opens next.</span></div>
-        <ul class="facts"><li>Repositories are never indexed automatically.</li><li>Each release keeps its source revision.</li><li>One release is free.</li></ul>
+        <ul class="facts"><li data-claim="no-repository-indexing">Repositories are never indexed automatically.</li><li data-claim="reviewable-pack">Each release keeps its source revision.</li><li data-claim="free-first-release">One release is free.</li></ul>
       </div>
       <figure class="hero-art">
         <picture><source media="(max-width: 700px)" srcset="/assets/notebook-hero-960.webp"><img src="/assets/notebook-hero-1536.webp" width="1536" height="1024" fetchpriority="high" alt="An engineering notebook with source cards, revision marks, and dependency diagrams"></picture>
       </figure>
     </div></section>
     <section class="section rule-paper" aria-labelledby="preview-title"><div class="wrap">
-      <div class="section-head"><p class="hand-note">The product itself</p><h2 id="preview-title">See what an agent receives</h2><p>Approved source records compile into a small Markdown file. Every item names its file and Git revision.</p></div>
+      <div class="section-head" data-claim="reviewable-pack"><p class="hand-note">The product itself</p><h2 id="preview-title">See what an agent receives</h2><p>Approved source records compile into a small Markdown file. Every item names its file and Git revision.</p></div>
       <div class="preview">
         <div class="preview-ledger"><h3>Selected sources</h3><ul><li><span class="type-label">ADR</span><strong> Regional SQLite storage</strong><br><span class="status current">Current</span></li><li><span class="type-label">Glossary</span><strong> Release train</strong><br><span class="status current">Current</span></li></ul></div>
         <div class="preview-sheet"><h3>Context pack 2026.08.21</h3><pre># Project context\n\n## ADR — Regional SQLite storage\nKeep each tenant in its chosen region.\n\nSource: docs/adr/0042.md @ 9f42c1a\nReference: project-memory://releases/2026.08.21#adr-042</pre></div>
@@ -147,20 +157,20 @@ function landing(): string {
     </div></section>
     <section class="section" aria-labelledby="how-title"><div class="wrap">
       <div class="section-head"><h2 id="how-title">How it works</h2></div>
-      <div class="steps"><div class="step"><h3>Add approved sources</h3><p>Paste a record or import one Markdown file. You choose every source.</p></div><div class="step"><h3>Review the pack</h3><p>Select records and read the exact Markdown before release.</p></div><div class="step"><h3>Release a version</h3><p>Copy or download the pack. Later source revisions show as stale.</p></div></div>
+      <div class="steps"><div class="step" data-claim="markdown-import no-repository-indexing"><h3>Add approved sources</h3><p>Paste a record or import one Markdown file. You choose every source.</p></div><div class="step" data-claim="reviewable-pack"><h3>Review the pack</h3><p>Select records and read the exact Markdown before release.</p></div><div class="step" data-claim="markdown-copy markdown-download stale-citations"><h3>Release a version</h3><p>Copy or download the pack. Later source revisions show as stale.</p></div></div>
     </div></section>
     <section class="section rule-paper" aria-labelledby="limits-title"><div class="wrap plain-grid">
-      <div><h2 id="limits-title">What it does not do</h2><ul><li>It does not crawl or index a repository.</li><li>It does not write decisions for your team.</li><li>It does not provide a chat interface.</li></ul></div>
-      <div><h2>How project data is handled</h2><p>You add each approved record. The service stores those records and releases in its own SQLite database. Demo changes stay in an isolated browser session.</p><a href="/privacy" data-nav>Read the privacy policy</a></div>
+      <div data-claim="no-repository-indexing"><h2 id="limits-title">What it does not do</h2><p>It does not crawl or index a repository. You add each approved source.</p></div>
+      <div data-claim="sqlite-restart-persistence demo-database-isolation"><h2>How project data is handled</h2><p>The service keeps real records in SQLite. Demo changes stay in an isolated browser session.</p><a href="/privacy" data-nav>Read the privacy policy</a></div>
     </div></section>
     <section class="section" aria-labelledby="pricing-title"><div class="wrap">
-      <div class="price-sheet"><p class="hand-note">Team licenses</p><h2 id="pricing-title">Restore an existing team license</h2><p>Team checkout is not available yet. A verified team license allows more releases. It also lets the license holder share a workspace key with teammates.</p><div class="actions"><button class="primary" data-action="open-license">Restore a license</button></div><p class="field-help">Paste the license from your Sociobot receipt. No purchase action is shown until checkout registration is available.</p></div>
+      <div class="price-sheet" data-claim="checkout-unavailable license-restore licensed-recurring-releases licensed-shared-workspace"><p class="hand-note">Team licenses</p><h2 id="pricing-title">Restore an existing team license</h2><p>Team checkout is not available yet. A verified team license allows more releases. It also lets the license holder share a workspace key with teammates.</p><div class="actions"><button class="primary" data-action="open-license">Restore a license</button></div><p class="field-help">Paste the license from your Sociobot receipt. No purchase action is shown until checkout registration is available.</p></div>
     </div></section>`);
 }
 
 function legalPage(kind: "privacy" | "terms"): string {
-  const privacy = `<h1 tabindex="-1">Privacy</h1><p>Last updated: 2 September 2026</p><h2>What we store</h2><p>The service stores the source records and releases you add. It also stores source paths and Git revision labels.</p><p>A team license is stored in your browser. Sociobot receives that license when the browser verifies it.</p><h2>What we do not collect</h2><p>We do not index repositories automatically. We do not use analytics or advertising trackers. The demo uses session storage and does not send its records to the project database.</p><h2>Storage and deletion</h2><p>Project records live in the service SQLite database. Delete individual sources from the workspace. Contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> for full workspace deletion.</p><h2>Service providers</h2><p>Sociobot handles billing and license checks. The hosting provider processes network and storage data needed to run the service.</p>`;
-  const terms = `<h1 tabindex="-1">Terms</h1><p>Last updated: 2 September 2026</p><h2>Free and existing team licenses</h2><p>The free plan includes one release. Checkout for new team licenses is not available yet. A verified team license allows more releases. It also lets the license holder share a workspace key with teammates.</p><h2>Using the service</h2><p>You must have permission to add each source record. You remain responsible for reviewing packs before using them with an agent.</p><h2>Billing and refunds</h2><p>Sociobot is the merchant of record for existing licenses. Billing support and approved refunds are handled by Sociobot. A refund or cancellation may end a license.</p><h2>Availability</h2><p>The service is provided as available. Keep copies of released packs in your repository. We may suspend misuse that harms the service or other users.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with billing or service questions.</p>`;
+  const privacy = `<h1 tabindex="-1">Privacy</h1><p>Last updated: 6 September 2026</p><h2>What we store</h2><p data-claim="sqlite-restart-persistence">The service stores the source records and releases you add in SQLite. They remain available after a restart that uses the same data directory.</p><p data-claim="license-storage-boundary">A team license stays in your browser. The browser sends it only to Sociobot for verification.</p><p data-claim="workspace-key-hash">The service stores a one-way hash of a workspace key, not the key itself.</p><h2>What we do not collect</h2><p data-claim="no-repository-indexing first-party-assets">We do not index repositories automatically. We do not use analytics or advertising trackers.</p><p data-claim="demo-privacy demo-database-isolation">The demo uses browser session storage. Its records do not enter the project database.</p><p data-claim="offline-demo">After its first visit, the demo can reload offline with its sample data.</p><h2>Storage and deletion</h2><p data-claim="released-pack-immutable">Delete individual sources from the workspace. Released packs keep their compiled copy.</p><p>Contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> for full workspace deletion.</p><h2>Service providers</h2><p>Sociobot handles existing-license checks. The hosting provider processes network and storage data needed to run the service.</p>`;
+  const terms = `<h1 tabindex="-1">Terms</h1><p>Last updated: 6 September 2026</p><h2>Free and existing team licenses</h2><p data-claim="free-first-release checkout-unavailable licensed-recurring-releases licensed-shared-workspace">The free plan includes one release. Checkout for new team licenses is not available yet. A verified team license allows more releases. It also lets the license holder share a workspace key with teammates.</p><h2>Using the service</h2><p data-claim="reviewable-pack">You must have permission to add each source record. Review a pack before using it with an agent.</p><h2>Billing and refunds</h2><p>Sociobot is the merchant of record for existing licenses. Billing support and approved refunds are handled by Sociobot. A refund or cancellation may end a license.</p><h2>Availability</h2><p>The service is provided as available. Keep copies of released packs in your repository. We may suspend misuse that harms the service or other users.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with billing or service questions.</p>`;
   return layout(`<div class="wrap legal"><article>${kind === "privacy" ? privacy : terms}</article></div>`);
 }
 
@@ -202,25 +212,26 @@ function workspace(state: ProjectState): string {
   const demo = isDemo();
   const sources = state.entries.length ? state.entries.map(entry => `<li class="source-item">
     <input type="checkbox" aria-label="Include ${escapeHtml(entry.title)}" data-select="${escapeHtml(entry.id)}" ${selected.has(entry.id) ? "checked" : ""}>
-    <div><span class="type-label">${escapeHtml(entry.kind)}</span><strong>${escapeHtml(entry.title)}</strong><p class="source-body">${escapeHtml(entry.body)}</p><div class="source-meta">${escapeHtml(entry.sourcePath)} @ ${escapeHtml(entry.sourceRevision)}</div><div class="source-actions"><button data-action="edit-source" data-id="${escapeHtml(entry.id)}">Edit source</button><button class="delete" data-action="delete-source" data-id="${escapeHtml(entry.id)}">Delete source</button></div></div>
+    <div><span class="type-label">${escapeHtml(entry.kind)}</span><strong>${escapeHtml(entry.title)}</strong><p class="source-body">${escapeHtml(entry.body)}</p><div class="source-meta">${escapeHtml(entry.sourcePath)} @ ${escapeHtml(entry.sourceRevision)}</div><div class="source-actions"><button data-action="edit-source" data-id="${escapeHtml(entry.id)}">Edit source</button><button class="delete" data-action="delete-source" data-id="${escapeHtml(entry.id)}" data-claim="released-pack-immutable">Delete source</button></div></div>
   </li>`).join("") : `<li class="empty"><h3>No approved sources yet</h3><p>Add an ADR, glossary term, or product decision. It will appear here for review.</p><button class="primary" data-action="add-source">Add the first source</button></li>`;
   const releases = state.releases.length ? state.releases.map(release => `<article class="release-card" data-release-id="${escapeHtml(release.id)}">
     <header><div><h3>Context pack ${escapeHtml(release.version)}</h3><div>${escapeHtml(new Date(release.createdAt).toLocaleString())}</div></div><span class="status ${release.staleCount ? "stale" : "current"}">${release.staleCount ? `${release.staleCount} stale ${release.staleCount === 1 ? "source" : "sources"}` : "All sources current"}</span></header>
     ${release.notes ? `<p>${escapeHtml(release.notes)}</p>` : ""}<details><summary>Review compiled Markdown</summary><pre class="pack-output">${escapeHtml(release.content)}</pre></details>
-    <div class="release-actions"><button data-action="copy-release" data-id="${escapeHtml(release.id)}">Copy Markdown</button><button data-action="download-release" data-id="${escapeHtml(release.id)}">Download .md</button></div>
+    <div class="release-actions"><button data-action="copy-release" data-id="${escapeHtml(release.id)}" data-claim="markdown-copy">Copy Markdown</button><button data-action="download-release" data-id="${escapeHtml(release.id)}" data-claim="markdown-download">Download .md</button></div>
   </article>`).join("") : `<div class="empty"><h3>No context packs released</h3><p>Select at least one approved source. Then name and release the first version.</p></div>`;
+  const draft = draftPreview ? `<section class="draft-preview" aria-labelledby="draft-heading" data-claim="reviewable-pack"><div class="panel-heading"><div><p class="eyebrow">Before release</p><h2 id="draft-heading">Review exact Markdown</h2></div></div><p>This is the exact Markdown that will be saved when you confirm.</p><pre class="pack-output">${escapeHtml(draftPreview.content)}</pre><div class="release-actions"><button class="primary" data-action="confirm-release">Release reviewed pack</button><button class="secondary" data-action="cancel-preview">Edit release details</button></div></section>` : `<form class="release-form" id="release-form"><label>Version<input name="version" required maxlength="40" placeholder="2026.09.1"></label><label>Review note<input name="notes" maxlength="180" placeholder="Approved for checkout work"></label><button class="primary" type="submit">Review selected Markdown</button></form>`;
   return layout(`<section class="workspace-head"><div class="wrap"><p class="eyebrow">${demo ? "Sample workspace" : "Your workspace"}</p><h1 tabindex="-1">Release a context pack</h1><div class="workspace-summary"><span>${state.entries.length} approved sources</span><span>${state.releases.length} released versions</span><span>${state.releases.reduce((n, r) => n + r.staleCount, 0)} stale citations</span>${demo ? "" : '<button class="link-button" data-action="open-access">Share team access</button>'}</div><div id="network-state" aria-live="polite"></div></div></section>
     <div class="wrap workspace">
-      <section class="ledger" aria-labelledby="sources-heading"><div class="panel-heading"><h2 id="sources-heading">Approved sources</h2><button class="primary" data-action="add-source">Add source</button></div><ul class="source-list">${sources}</ul></section>
+      <section class="ledger" aria-labelledby="sources-heading"><div class="panel-heading"><h2 id="sources-heading">Approved sources</h2><button class="primary" data-action="add-source">Add source</button></div><p class="field-help" data-claim="released-pack-immutable">Deleting a source does not change a released pack.</p><ul class="source-list">${sources}</ul></section>
       <section class="release-board" aria-labelledby="releases-heading"><div class="panel-heading"><h2 id="releases-heading">Released packs</h2></div>
-        <form class="release-form" id="release-form"><label>Version<input name="version" required maxlength="40" placeholder="2026.09.1"></label><label>Review note<input name="notes" maxlength="180" placeholder="Approved for checkout work"></label><button class="primary" type="submit">Release selected</button></form>
+        ${draft}
         <div id="workspace-message" aria-live="polite">${liveMessage ? `<div class="notice">${escapeHtml(liveMessage)}</div>` : ""}</div><div class="release-list">${releases}</div>
       </section>
     </div>`);
 }
 
 function notFound(): string {
-  return layout(`<div class="wrap not-found"><div><p class="eyebrow">404</p><h1 tabindex="-1">This page is not in the notebook</h1><p>The link may be old or incomplete.</p><a class="button" href="/" data-nav>Return home</a></div></div>`);
+  return layout(`<div class="wrap not-found"><div><p class="eyebrow">404</p><h1 tabindex="-1">Page not found</h1><p>This link may be old or incomplete.</p><a class="button" href="/" data-nav>Return home</a></div></div>`);
 }
 
 function showSourceDialog(entry?: Entry): void {
@@ -264,6 +275,7 @@ function showSourceDialog(entry?: Entry): void {
         const response = await apiFetch(entry ? `/api/entries/${encodeURIComponent(entry.id)}` : "/api/entries", { method: entry ? "PUT" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
         if (!response.ok) throw new Error(await errorMessage(response));
       }
+      draftPreview = null;
       liveMessage = entry ? "Source saved." : "Source added."; close(); await render();
     } catch (error) { backdrop.querySelector("#dialog-error")!.innerHTML = `<div class="error">${escapeHtml(error instanceof Error ? error.message : "The source could not be saved. Try again.")}</div>`; }
   });
@@ -344,13 +356,15 @@ function bindGlobalEvents(): void {
     if (action === "delete-source") await deleteSource(target.dataset.id!);
     if (action === "copy-release") await copyRelease(target.dataset.id!);
     if (action === "download-release") downloadRelease(target.dataset.id!);
-    if (action === "reset-demo") { sessionStorage.removeItem(DEMO_KEY); selected.clear(); liveMessage = "Demo reset to its original sample."; await render(); }
-    if (action === "leave-demo") sessionStorage.removeItem(DEMO_KEY);
+    if (action === "reset-demo") { sessionStorage.removeItem(DEMO_KEY); selected.clear(); draftPreview = null; liveMessage = "Demo reset to its original sample."; await render(); }
+    if (action === "leave-demo") { sessionStorage.removeItem(DEMO_KEY); draftPreview = null; }
     if (action === "open-license") showLicenseDialog();
     if (action === "open-access") showAccessDialog();
+    if (action === "confirm-release") await confirmRelease();
+    if (action === "cancel-preview") { draftPreview = null; liveMessage = "Review cancelled. Update the version or selected sources, then review again."; await render(); }
   }));
   document.querySelectorAll<HTMLInputElement>("[data-select]").forEach(box => box.addEventListener("change", () => { box.checked ? selected.add(box.dataset.select!) : selected.delete(box.dataset.select!); }));
-  document.querySelector<HTMLFormElement>("#release-form")?.addEventListener("submit", createRelease);
+  document.querySelector<HTMLFormElement>("#release-form")?.addEventListener("submit", reviewRelease);
   updateNetworkState();
 }
 
@@ -359,28 +373,58 @@ async function deleteSource(id: string): Promise<void> {
   try {
     if (isDemo()) { const state = getDemoState(); state.entries = state.entries.filter(item => item.id !== id); saveDemoState(state); }
     else { const response = await apiFetch(`/api/entries/${encodeURIComponent(id)}`, { method: "DELETE" }); if (!response.ok) throw new Error(await errorMessage(response)); }
-    selected.delete(id); liveMessage = "Source deleted. Released packs were not changed."; await render();
+    selected.delete(id); draftPreview = null; liveMessage = "Source deleted. Released packs were not changed."; await render();
   } catch (error) { liveMessage = error instanceof Error ? error.message : "The source could not be deleted. Try again."; await render(); }
 }
 
-function compileDemo(version: string, notes: string, entries: Entry[]): Release {
-  const content = `---\ncontext-pack: ${version}\nreleased: ${new Date().toISOString().slice(0, 10)}\n---\n\n# Project context\n\n${entries.map(entry => `## ${entry.kind} — ${entry.title}\n${entry.body}\n\nSource: ${entry.sourcePath} @ ${entry.sourceRevision}\nReference: project-memory://releases/${version}#${entry.id}`).join("\n\n")}`;
-  return { id: crypto.randomUUID(), version, notes, content, createdAt: new Date().toISOString(), staleCount: 0 };
+function compileDemoPreview(version: string, notes: string, entries: Entry[], createdAt = new Date().toISOString()): DraftPreview {
+  const content = `---\ncontext-pack: ${version}\nreleased: ${createdAt.slice(0, 10)}\n---\n\n# Project context\n\n${entries.map(entry => `## ${entry.kind} — ${entry.title}\n${entry.body}\n\nSource: ${entry.sourcePath} @ ${entry.sourceRevision}\nReference: project-memory://releases/${version}#${entry.id}`).join("\n\n")}`;
+  return { version, notes, entryIds: entries.map(entry => entry.id), previewDate: createdAt.slice(0, 10), content, createdAt };
 }
 
-async function createRelease(event: SubmitEvent): Promise<void> {
+async function reviewRelease(event: SubmitEvent): Promise<void> {
   event.preventDefault(); const form = event.currentTarget as HTMLFormElement; const values = new FormData(form); const version = values.get("version")!.toString().trim(); const notes = values.get("notes")!.toString().trim();
-  if (!selected.size) { liveMessage = "Select at least one approved source before releasing."; await render(); return; }
-  if (!isDemo() && currentState?.releases.length && !hasActiveLicense()) { liveMessage = "The free plan includes one release. Restore a team license to release another version."; await render(); showLicenseDialog(); return; }
+  if (!selected.size) { liveMessage = "Select at least one approved source before reviewing."; await render(); return; }
+  if (!isDemo() && currentState?.releases.length && !hasActiveLicense()) { liveMessage = "The free plan includes one release. Restore a team license to review another version."; await render(); showLicenseDialog(); return; }
   try {
     if (isDemo()) {
       const state = getDemoState(); if (state.releases.some(item => item.version === version)) throw new Error("That version already exists. Enter a new version.");
-      state.releases.unshift(compileDemo(version, notes, state.entries.filter(item => selected.has(item.id)))); saveDemoState(state);
+      draftPreview = compileDemoPreview(version, notes, state.entries.filter(item => selected.has(item.id)));
     } else {
-      const response = await apiFetch("/api/releases", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version, notes, entryIds: [...selected] }) }); if (!response.ok) throw new Error(await errorMessage(response));
+      const response = await apiFetch("/api/releases/preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version, notes, entryIds: [...selected] }) });
+      if (!response.ok) throw new Error(await errorMessage(response));
+      const preview = await response.json() as Omit<DraftPreview, "createdAt">;
+      draftPreview = { ...preview, createdAt: new Date().toISOString() };
     }
-    selected.clear(); liveMessage = `Context pack ${version} released.`; await render();
-  } catch (error) { liveMessage = error instanceof Error ? error.message : "The context pack could not be released. Try again."; await render(); }
+    liveMessage = `Review Context pack ${version}. Confirm only when the Markdown is ready.`; await render();
+  } catch (error) { liveMessage = error instanceof Error ? error.message : "The Markdown preview could not be created. Try again."; await render(); }
+}
+
+async function confirmRelease(): Promise<void> {
+  const draft = draftPreview;
+  if (!draft || !currentState) return;
+  if (!isDemo() && currentState.releases.length && !hasActiveLicense()) {
+    liveMessage = "The free plan includes one release. Restore a team license to release another version.";
+    await render(); showLicenseDialog(); return;
+  }
+  try {
+    if (isDemo()) {
+      const state = getDemoState();
+      const entries = state.entries.filter(entry => draft.entryIds.includes(entry.id));
+      const currentDraft = compileDemoPreview(draft.version, draft.notes, entries, draft.createdAt);
+      if (entries.length !== draft.entryIds.length || currentDraft.content !== draft.content) throw new Error("A selected source changed after the preview. Review the Markdown again before releasing.");
+      state.releases.unshift({ id: crypto.randomUUID(), version: draft.version, notes: draft.notes, content: draft.content, createdAt: draft.createdAt, staleCount: 0 });
+      saveDemoState(state);
+    } else {
+      const response = await apiFetch("/api/releases", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: draft.version, notes: draft.notes, entryIds: draft.entryIds, previewDate: draft.previewDate, previewContent: draft.content }) });
+      if (!response.ok) throw new Error(await errorMessage(response));
+    }
+    selected.clear(); draftPreview = null; liveMessage = `Context pack ${draft.version} released.`; await render();
+  } catch (error) {
+    draftPreview = null;
+    liveMessage = error instanceof Error ? error.message : "The context pack could not be released. Review the Markdown again.";
+    await render();
+  }
 }
 
 async function copyRelease(id: string): Promise<void> {
