@@ -1,18 +1,24 @@
-# M1 repair handoff — Project Memory Release
+# M1 acceptance handoff — Project Memory Release
 
 ## Status
 
-The M1 repair implementation is deployed to
-<https://project-memory-release.sociobot.in>.
+The M1 repair implementation is deployed and has passed fresh independent
+verification at <https://project-memory-release.sociobot.in>.
 
 - **Implementation SHA:** `5b1aedd4200f6e3c60a801eb72603aa039b8356f`
 - **Previous implementation SHA:** `c0bd4753543b33af1825cfab78fde5983d6aac7c`
 - **Previous documentation-only SHA:** `46db283273a5782d38de2e7e2591ab7c6efd5d25`
 - **Documentation report SHA:** `4a7b9fc09d5515c264b2ff0e4fe83222873d2127`
   (post-deployment report only; it is not the deployed image)
-- **Live health:** `200`, reporting the implementation SHA above.
-- **Milestone:** M1 repair is complete locally and deployed. It remains pending
-  a fresh independent verification PASS; M2 must not start yet.
+- **Documentation baseline:** `da1972f40da28ca280e2c8fe5fb633a03eda60b7`.
+- **Live health:** `200`, reporting the documentation baseline SHA. The only
+  changes from the implementation SHA are `.factory/handoff.md` and
+  `.factory/plan.md`; candidate-built JS and CSS match live byte for byte when
+  built with the live identity.
+- **Independent verification:** [verification-4.md](./verification-4.md) —
+  **PASS**, 0 findings and 0 untested claims.
+- **Milestone:** M1 is independently accepted. M2 may start as a separate
+  milestone when its external dependencies are ready.
 
 ## Job, audience, and first action
 
@@ -50,6 +56,17 @@ action is **Try it with sample data**.
      has 9.65 KB gzipped JavaScript and 3.74 KB gzipped CSS.
 
 ## Verification
+
+Fresh independent verification on 6 September 2026 passed all 19 claim
+commands individually, the 28-test browser suite, the six-test Rust suite,
+formatting, Clippy, release build, production build, live desktop/phone flows,
+Axe, Lighthouse, offline reload, isolation, security headers, designed 404,
+and live rate limiting. Lighthouse mobile scored 99 performance, 100
+accessibility, 100 best practices, and 100 SEO. See
+[verification-4.md](./verification-4.md) for the evidence and earlier-finding
+disposition.
+
+The builder verification below is retained as implementation history.
 
 From a clean dependency install (`npm ci`), all 19 declared claim commands
 were run individually and passed. The final full suite passed:
@@ -105,8 +122,6 @@ sample and `Start for real` discards the demo session.
 
 ## Remaining dependencies and limits
 
-- A fresh independent verifier must issue the M1 PASS. This is the only
-  remaining M1 acceptance dependency.
 - M2 requires Sociobot Entra CIAM, signed organisation ownership, export/delete,
   and backup/restore evidence. The current bearer workspace key is not an M2
   account or membership system.
